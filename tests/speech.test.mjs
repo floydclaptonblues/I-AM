@@ -73,7 +73,7 @@ test('a voice that never starts releases loading state', () => {
   const s = setup(); s.narrator.play('Test.'); [...s.timers.values()][0](); assert.equal(s.states.at(-1), 'unavailable'); assert.equal(s.timers.size, 0);
 });
 test('the three original themes and both expansions are present', () => {
-  assert.equal(dialogues.length, 26);
+  assert.equal(dialogues.length, 48);
   assert.match(dialogues[0].text, /ate what ate the food you desired/);
   assert.match(dialogues[1].text, /not out of respect/);
   assert.match(dialogues[2].text, /I am solipsism/);

@@ -37,7 +37,7 @@ export class Narrator {
     this.synth?.cancel();
     this.onState(state);
   }
-  play(text) {
+  play(text, { rate = 0.68, pitch = 0.4, volume = 1 } = {}) {
     this.stop();
     if (!this.synth || !this.Utterance) { this.onState('unavailable'); return; }
     const generation = this.generation;
@@ -48,8 +48,9 @@ export class Narrator {
       const utterance = new this.Utterance(sentences[index]);
       this.current = utterance; // Retain the utterance while the browser is speaking.
       utterance.lang = 'en-US';
-      utterance.rate = 0.68;
-      utterance.pitch = 0.4;
+      utterance.rate = rate;
+      utterance.pitch = pitch;
+      utterance.volume = volume;
       const voices = this.synth.getVoices();
       utterance.voice = voices.find(v => /^en[-_]/i.test(v.lang) && /David|Daniel|George/i.test(v.name))
         ?? voices.find(v => /^en[-_]/i.test(v.lang) && v.localService)

@@ -1,7 +1,8 @@
-import { opening, DialogueJourney } from './dialogue.js?v=remember-1';
-import { loadSession, saveSession } from './session.js?v=remember-1';
-import { Narrator, FirstVisitGreeting } from './speech.js?v=slow-voice-1';
+import { opening, DialogueJourney } from './dialogue.js?v=first-light-1';
+import { loadSession, saveSession } from './session.js?v=first-light-1';
+import { Narrator, FirstVisitGreeting } from './speech.js?v=first-light-1';
 import { Portrait } from './portrait.js';
+import { HeldResponse } from './response.js?v=first-light-1';
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const synth = window.speechSynthesis;
@@ -11,7 +12,7 @@ let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches;
 let current = journey.current;
 let background = { still: 'assets/garden-still.webp', animated: null };
 let sentence = opening;
-let greeting;
+let greeting, heldResponse;
 const portrait = new Portrait({ setFrame: state => { $('portrait').dataset.mouth = state; } });
 const stateLabels = { idle: 'Listening.', loading: 'Waiting for voice.', speaking: 'Speaking.', between: 'Pausing.', finished: 'Listening.', paused: 'Paused.', unavailable: 'Voice unavailable. The complete response is available in the dialogue panel and Review.' };
 function showText(text) { $('caption').textContent = text; $('response-scroll').scrollTop = 0; }
@@ -20,11 +21,12 @@ const narrator = new Narrator({
   onState(state) {
     const speaking = state === 'speaking';
     document.body.dataset.speaking = String(speaking);
-    portrait.setSpeaking(speaking);
+    portrait.setSpeaking(speaking && !heldResponse?.active);
     $('status').textContent = stateLabels[state];
     $('stop').disabled = !['loading','speaking','between','paused'].includes(state);
     if (state === 'finished' || state === 'unavailable') showText(current.text);
     greeting?.observe(state);
+    heldResponse?.observe(state);
   },
   onSentence(text) { sentence = text; showText(text); },
   onWord(index, length, text) {
@@ -47,16 +49,18 @@ greeting = new FirstVisitGreeting({
   }
 });
 function cancelGreeting() { greeting.cancel(); $('hear-opening').hidden = true; }
+function stopResponse() { heldResponse?.cancel(); narrator.stop(); }
 function play() {
-  cancelGreeting();
-  if (muted) { narrator.stop(); showText(current.text); $('status').textContent = 'Sound off. Response ready.'; return; }
+  cancelGreeting(); stopResponse();
+  if (current.response === 'held-gaze') { heldResponse.start(current.text, { muted }); return; }
+  showText(current.text);
+  if (muted) { $('status').textContent = 'Sound off. Response ready.'; return; }
   narrator.play(current.text);
 }
 function choose(entry) {
   if (!journey.choose(entry.id)) return;
-  narrator.stop();
+  stopResponse();
   current = journey.current;
-  showText(entry.text);
   renderChoices({ focus: true });
   play();
   remember();
@@ -86,7 +90,7 @@ function renderChoices({ focus = false, focusId = null } = {}) {
 function returnToQuestions(first = false) {
   cancelGreeting();
   const focusId = first ? journey.trail[1] : current.id;
-  narrator.stop();
+  stopResponse();
   if (first) journey.firstQuestions(); else journey.back();
   current = journey.current;
   showText(current.text);
@@ -98,10 +102,10 @@ $('back-questions').addEventListener('click', () => returnToQuestions());
 $('first-questions').addEventListener('click', () => returnToQuestions(true));
 $('listen').addEventListener('click', () => play());
 $('hear-opening').addEventListener('click', () => play());
-$('stop').addEventListener('click', () => { cancelGreeting(); narrator.stop(); showText(current.text); });
+$('stop').addEventListener('click', () => { cancelGreeting(); stopResponse(); showText(current.text); });
 $('mute').addEventListener('click', () => {
   cancelGreeting();
-  muted=!muted; narrator.stop(); showText(current.text);
+  muted=!muted; stopResponse(); showText(current.text);
   updateSound();
   $('status').textContent=muted?'Sound off.':'Sound on. Select Replay to hear the response.';
   remember();
@@ -114,7 +118,7 @@ function updateSound() {
 function updateMotion() {
   const frozen = still || reduced.matches;
   document.body.classList.toggle('still',frozen);
-  portrait.setStill(frozen);
+  portrait.setStill(frozen || Boolean(heldResponse?.active));
   $('motion').setAttribute('aria-pressed',String(frozen));
   $('motion').textContent=frozen?'MOTION':'STILL';
   $('motion').setAttribute('aria-label',frozen?'Allow motion':'Pause all motion');
@@ -129,7 +133,7 @@ $('garden-image').addEventListener('error',()=>{
 fetch('assets/background.json').then(r=>{if(!r.ok)throw new Error('Background configuration missing');return r.json();}).then(config=>{background=config;updateMotion();}).catch(()=>updateMotion());
 function review() {
   cancelGreeting();
-  narrator.stop(); showText(current.text);
+  stopResponse(); showText(current.text);
   $('history').replaceChildren();
   for(const item of journey.transcript){
     const article=document.createElement('article');
@@ -142,13 +146,13 @@ $('review').addEventListener('click',review);
 $('close-review').addEventListener('click',()=>$('review-dialog').close());
 function askToRestart() {
   cancelGreeting();
-  narrator.stop(); showText(current.text);
+  stopResponse(); showText(current.text);
   $('restart-dialog').showModal(); $('cancel-restart').focus();
 }
 $('restart').addEventListener('click', askToRestart);
 $('cancel-restart').addEventListener('click', () => $('restart-dialog').close());
 $('confirm-restart').addEventListener('click', () => {
-  narrator.stop(); journey.reset(); current=journey.current;
+  stopResponse(); journey.reset(); current=journey.current;
   $('history').replaceChildren();
   $('restart-dialog').close();
   showText(current.text); renderChoices({ focus: true });
@@ -159,14 +163,24 @@ document.addEventListener('keydown',event=>{
   if($('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
   if(/^[1-9]$/.test(event.key)){
     const entry=journey.choices[Number(event.key)-1];if(entry){event.preventDefault();choose(entry);}
-  }else if(event.key==='Escape'){cancelGreeting();narrator.stop();showText(current.text);}
+  }else if(event.key==='Escape'){cancelGreeting();stopResponse();showText(current.text);}
 });
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){cancelGreeting();narrator.stop();portrait.suspend();showText(current.text);}
+  if(document.hidden){cancelGreeting();stopResponse();portrait.suspend();showText(current.text);}
   else {portrait.start();updateMotion();greeting.start();}
 });
-window.addEventListener('pagehide',()=>{narrator.stop();portrait.suspend();});
+window.addEventListener('pagehide',()=>{stopResponse();portrait.suspend();});
 window.addEventListener('pageshow',event=>{if(event.persisted){portrait.start();updateMotion();}});
+heldResponse = new HeldResponse({
+  hold: active => { document.body.classList.toggle('held-gaze', active); updateMotion(); },
+  waiting: active => {
+    $('response-scroll').setAttribute('aria-busy', String(active));
+    if (active) { $('status').textContent='Waiting.'; $('stop').disabled=false; }
+  },
+  reveal: showText,
+  speak: (text, options) => narrator.play(text, options),
+  done: () => { $('stop').disabled=true; $('status').textContent=muted?'Sound off. Response ready.':'Listening.'; }
+});
 showText(current.text);renderChoices();updateSound();portrait.start();updateMotion();
 $('status').textContent = journey.history.length ? 'Your place is remembered. Select a question or Replay.' : 'Select a question or Replay to hear the serpent.';
 if (!document.hidden) greeting.start();
