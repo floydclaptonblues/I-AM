@@ -30,7 +30,7 @@ The Publish the garden workflow runs all tests and syntax checks, packages only 
 - Responses follow actual sentence starts; the active word highlights when the browser voice supplies word boundaries. At the end, the whole answer remains in the scrollable text panel.
 - Mute, errors, missing voices, or a stalled speech engine leave all answer text available. Unmuting never unexpectedly starts audio.
 - The portrait has separate closed, partial, open, and closed-mouth blink frames. Mouth pulses are triggered by real word events; silence, cancellation, hidden pages, and reduced motion close the mouth. Voices without word boundaries receive only a brief sentence-onset movement, not a simulated talking loop.
-- Reduced motion disables all portrait movement, blinking, interference, and interference effects; the supplied photograph remains static. The user's operating-system preference takes priority over the Still switch.
+- Reduced motion disables all portrait movement, blinking, interference, and the animated background. The user's operating-system preference takes priority over the Still switch.
 - Native dialog focus management, labeled controls, a skip link, text transcripts, and a polite screen-reader status region remain available. Rapid caption changes are not announced through a live region.
 
 ## Narrative and assets
@@ -44,14 +44,14 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 ## Source map
 
 - `index.html`: original console hardware, portrait window, response panel, choices, controls, Review dialog
-- `styles.css`: metal finish, responsive layout, ivory/gold typography and the supplied night photograph, restrained CRT effects
+- `styles.css`: metal finish, responsive layout, ivory/gold typography and the brighter Eden background, restrained CRT effects
 - `app.js`: encounter state, transcripts, question selection, captions, sound/motion controls
 - `dialogue.js`: original answers, additional dialogue, unlock requirements
 - `response.js`: cancellable silence and held gaze for the late response
 - `session.js`: versioned browser-local persistence with validation and graceful storage failures
 - `speech.js`: speech synthesis lifecycle and cancellation guards
 - `portrait.js`: discrete mouth states and independent blinking
-- `assets/`: night photograph, archived original garden GIF/still, portrait sheet, texture, favicon, provenance
+- `assets/`: original garden GIF/still, archived night photograph, portrait sheet, texture, favicon, provenance
 - `tests/`: speech lifecycle, unchanged core dialogue, unlock logic, portrait motion and copy audit
 - `scripts/serve.mjs`: local static server
 - `.nojekyll`: plain static Pages serving
@@ -62,4 +62,4 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 
 The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.
 
-The current backdrop is the user-supplied `20251029_184522.jpg`, copied unchanged as `assets/angel-night.jpg`. The console and controls use charcoal, warm ivory and muted gold while keeping the previous layout and dimensions. The older garden assets remain archived and are no longer selected by the application.
+The current backdrop is the original Eden GIF, displayed at 118% brightness without a tint, shadow overlay, or vignette. Still and reduced-motion modes use its first frame with the same brightness. The console and controls retain the charcoal, warm ivory and muted gold palette and their existing layout. The night photograph remains archived and is no longer selected by the application.

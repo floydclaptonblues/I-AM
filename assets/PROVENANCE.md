@@ -1,11 +1,11 @@
 # Asset provenance
 
-- `angel-night.jpg`: user-supplied **20251029_184522.jpg**, copied byte-for-byte as the current page and console background. SHA-256: `6299e0fb92047dd2d3ffd86cfb055eab7d5b3199b24ad3ad9253ae7baa9eb164`.
-- `night-fallback.svg`: original neutral charcoal fallback for a failed photograph load.
-- The previous garden GIF and still remain archived; they are no longer the active background.
+- `angel-night.jpg`: user-supplied **20251029_184522.jpg**, copied byte-for-byte; archived after restoring the Eden GIF. SHA-256: `6299e0fb92047dd2d3ffd86cfb055eab7d5b3199b24ad3ad9253ae7baa9eb164`.
+- `night-fallback.svg`: archived neutral charcoal fallback from the photograph theme.
+- The original garden GIF is active again, with CSS brightness(1.18) and no tint/shadow overlay. The original image bytes remain unchanged.
 
 - `eden-figs.gif`: supplied by the user as **Eden Garden Figs Animation.gif**, copied byte-for-byte. SHA-256: `b94e7b6c9c8d735eaa3093681f0cc1d7ddbe41b356ea28a39e3857a23ec3683c`.
-- `garden-still.webp`: first frame of that GIF, used for reduced motion and before entry.
+- `garden-still.webp`: first frame of that GIF, used for reduced motion and initial loading.
 - `serpent-states.webp`: an original four-frame portrait sheet derived with the built-in ImageGen tool from a frame of the user-supplied **cmaym1kxk009r3j77s9h7rwb6.mp4**. The supplied video showed a brown snake, a tree, and an arena; the edit retained the snake's facial structure while creating the requested green, close-up game portrait. It is not presented as an untouched video extraction.
 - Sheet layout: closed mouth / partial mouth on the first row, open mouth / closed-mouth blink on the second row. Runtime uses CSS background-position to switch discrete cells. It never loops the sheet as a talking animation.
 - `metal-grain.svg` and CSS hardware: original code-authored texture and forms.
