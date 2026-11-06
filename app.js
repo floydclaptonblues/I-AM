@@ -1,6 +1,6 @@
 import { opening, DialogueJourney } from './dialogue.js?v=remember-1';
 import { loadSession, saveSession } from './session.js?v=remember-1';
-import { Narrator, FirstVisitGreeting } from './speech.js?v=greeting-1';
+import { Narrator, FirstVisitGreeting } from './speech.js?v=slow-voice-1';
 import { Portrait } from './portrait.js';
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -13,7 +13,7 @@ let background = { still: 'assets/garden-still.webp', animated: null };
 let sentence = opening;
 let greeting;
 const portrait = new Portrait({ setFrame: state => { $('portrait').dataset.mouth = state; } });
-const stateLabels = { idle: 'Listening.', loading: 'Waiting for voice.', speaking: 'Speaking.', between: 'Speaking.', finished: 'Listening.', paused: 'Paused.', unavailable: 'Voice unavailable. The complete response is available in the dialogue panel and Review.' };
+const stateLabels = { idle: 'Listening.', loading: 'Waiting for voice.', speaking: 'Speaking.', between: 'Pausing.', finished: 'Listening.', paused: 'Paused.', unavailable: 'Voice unavailable. The complete response is available in the dialogue panel and Review.' };
 function showText(text) { $('caption').textContent = text; $('response-scroll').scrollTop = 0; }
 const narrator = new Narrator({
   synth, Utterance: window.SpeechSynthesisUtterance,

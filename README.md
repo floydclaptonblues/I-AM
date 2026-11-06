@@ -35,7 +35,7 @@ The three core answers (`garden`, `test`, and `evil`) are unchanged from commit 
 
 The metal, grain, frame, controls, and interface are original code-native artwork. No Fallout images, logos, textures, or sound files are included. See [asset provenance](assets/PROVENANCE.md) for the supplied GIF/video and the derived portrait set.
 
-Browser speech synthesis chooses available English voices, preferring David, Daniel, or George. Rate is 0.82 and pitch is 0.65. Voice quality, word timing, and availability depend on the browser/OS; this is speech-event articulation, not phoneme-perfect lip synchronization. The app requests no microphone access and runs no custom AI service. Some browser voices use the browser vendor's online speech services.
+Browser speech synthesis chooses available English voices, preferring David, Daniel, or George. Rate is 0.68 and pitch is 0.4, with a 1.4-second pause between sentences. The mouth rests during these pauses; Stop, mute, switching questions, and leaving the page cancel the pending next sentence. Voice quality, word timing, and availability depend on the browser/OS; this is speech-event articulation, not phoneme-perfect lip synchronization. The app requests no microphone access and runs no custom AI service. Some browser voices use the browser vendor's online speech services.
 
 ## Source map
 
@@ -53,6 +53,6 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 
 ## Validation and recovery
 
-`npm test` covers 31 cases including rapid switching, cancellation, failed speech, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
+`npm test` covers 34 cases including rapid switching, cancellation, failed speech, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
 
 The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.

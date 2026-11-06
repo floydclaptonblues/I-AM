@@ -48,8 +48,8 @@ export class Narrator {
       const utterance = new this.Utterance(sentences[index]);
       this.current = utterance; // Retain the utterance while the browser is speaking.
       utterance.lang = 'en-US';
-      utterance.rate = 0.82;
-      utterance.pitch = 0.65;
+      utterance.rate = 0.68;
+      utterance.pitch = 0.4;
       const voices = this.synth.getVoices();
       utterance.voice = voices.find(v => /^en[-_]/i.test(v.lang) && /David|Daniel|George/i.test(v.name))
         ?? voices.find(v => /^en[-_]/i.test(v.lang) && v.localService)
@@ -63,7 +63,7 @@ export class Narrator {
         if (!valid()) return;
         this.onSentence(sentences[index], index, sentences.length);
         this.onState('speaking');
-        watchdog(Math.max(20000, sentences[index].length * 300));
+        watchdog(Math.max(20000, sentences[index].length * 400));
       };
       utterance.onboundary = event => {
         if (valid() && event.name === 'word') this.onWord(event.charIndex, event.charLength, sentences[index]);
@@ -73,8 +73,15 @@ export class Narrator {
       utterance.onend = () => {
         if (!valid()) return;
         this.clearTimer(this.timer);
+        this.timer = null;
+        this.current = null;
+        if (index + 1 === sentences.length) { this.stop('finished'); return; }
         this.onState('between');
-        next(index + 1);
+        this.timer = this.setTimer(() => {
+          if (generation !== this.generation) return;
+          this.timer = null;
+          next(index + 1);
+        }, 1400);
       };
       utterance.onerror = () => { if (valid()) this.stop('unavailable'); };
       this.onState('loading');
