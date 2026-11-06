@@ -10,7 +10,7 @@ const saved = loadSession();
 const journey = saved?.journey || new DialogueJourney();
 let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches;
 let current = journey.current;
-let background = { still: 'assets/garden-still.webp', animated: null };
+let background = { still: 'assets/angel-night.jpg', animated: null };
 let sentence = opening;
 let greeting, heldResponse;
 const portrait = new Portrait({ setFrame: state => { $('portrait').dataset.mouth = state; } });
@@ -128,9 +128,9 @@ function updateMotion() {
 $('motion').addEventListener('click',()=>{still=!still;updateMotion();remember();});
 reduced.addEventListener('change',()=>{still=reduced.matches;updateMotion();});
 $('garden-image').addEventListener('error',()=>{
-  if (!$('garden-image').src.endsWith('/assets/garden-still.svg')) $('garden-image').src='assets/garden-still.svg';
+  if (!$('garden-image').src.endsWith('/assets/night-fallback.svg')) $('garden-image').src='assets/night-fallback.svg';
 });
-fetch('assets/background.json').then(r=>{if(!r.ok)throw new Error('Background configuration missing');return r.json();}).then(config=>{background=config;updateMotion();}).catch(()=>updateMotion());
+fetch('assets/background.json?v=angel-1').then(r=>{if(!r.ok)throw new Error('Background configuration missing');return r.json();}).then(config=>{background=config;updateMotion();}).catch(()=>updateMotion());
 function review() {
   cancelGreeting();
   stopResponse(); showText(current.text);
