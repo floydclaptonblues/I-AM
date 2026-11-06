@@ -12,7 +12,9 @@ npm test
 npm run check
 ```
 
-The local server uses http://127.0.0.1:4173. GitHub Pages serves `main` from `/(root)` at https://floydclaptonblues.github.io/I-AM/. Every URL in the application is relative to support that project path.
+The local server uses http://127.0.0.1:4173. GitHub Pages publishes `main` through `.github/workflows/pages.yml` at https://floydclaptonblues.github.io/I-AM/. Pages Settings must use **GitHub Actions** as the source. Every URL in the application is relative to support that project path.
+
+The Publish the garden workflow runs all tests and syntax checks, packages only the public HTML, CSS, JavaScript, and assets, and deploys after those checks pass. Pushes to `main` publish automatically; the Actions tab also supports a manual run. Deployments run one at a time without interrupting an active publication. This replaces the automatic branch-publishing workflow whose November 6 retry remained queued without starting a job.
 
 ## Interaction
 
