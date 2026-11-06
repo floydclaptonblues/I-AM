@@ -17,7 +17,7 @@ The local server uses http://127.0.0.1:4173. GitHub Pages serves `main` from `/(
 ## Interaction
 
 - Enter starts the opening line from a user gesture. No automatic audio before entry.
-- Six numbered questions are initially available. Uprightness unlocks the hands answer; evil unlocks the light answer; evil plus identity unlocks the solitude contradiction.
+- Six numbered questions are initially available, with 26 exchanges in total. Follow-up questions unfold through the conversation: uprightness leads to hands, purpose, work, and freedom; the test leads to death, burial, and memory; identity leads to age, hurry, lies, and belief; the garden leads to paradise and return; evil leads to light, darkness, abandonment, resentment, and enjoyment.
 - Select questions with mouse/touch, Tab + Enter, or number keys 1–9. Escape stops narration outside the Review dialog.
 - Sound toggles audio, Replay repeats the selected answer, Silence stops it, Still pauses all visual motion, and Review opens the full conversation transcript.
 - Responses follow actual sentence starts; the active word highlights when the browser voice supplies word boundaries. At the end, the whole answer remains in the scrollable text panel.
@@ -49,6 +49,6 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 
 ## Validation and recovery
 
-`npm test` covers 13 cases including rapid switching, cancellation, failed speech, locked questions, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
+`npm test` covers 14 cases including rapid switching, cancellation, failed speech, locked questions, reachability of every exchange, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
 
 The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.

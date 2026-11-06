@@ -6,10 +6,25 @@ import { Portrait } from '../portrait.js';
 
 test('six initial questions and conditional follow-ups stay in a stable order', () => {
   assert.deepEqual(availableDialogues(new Set()).map(d=>d.id), ['garden','test','upright','others','evil','identity']);
-  assert.equal(availableDialogues(new Set(['upright'])).at(-1).id, 'hands');
+  assert.ok(availableDialogues(new Set(['upright'])).some(d=>d.id==='hands'));
   assert.ok(!availableDialogues(new Set(['evil'])).some(d=>d.id==='memory'));
   assert.ok(availableDialogues(new Set(['evil','identity'])).some(d=>d.id==='memory'));
-  assert.equal(availableDialogues(new Set(dialogues.map(d=>d.id))).length, 9);
+  assert.equal(availableDialogues(new Set(dialogues.map(d=>d.id))).length, 26);
+});
+test('every exchange is reachable through valid question prerequisites', () => {
+  const ids = new Set(dialogues.map(d=>d.id));
+  assert.equal(ids.size, dialogues.length, 'IDs must be unique');
+  for (const entry of dialogues) for (const required of entry.requires || []) assert.ok(ids.has(required), 'Unknown prerequisite: '+required);
+  const visited = new Set();
+  for (let pass=0; pass<dialogues.length; pass++) {
+    const before = visited.size;
+    for (const entry of availableDialogues(visited)) visited.add(entry.id);
+    if (visited.size === before) break;
+  }
+  assert.deepEqual([...visited].sort(), [...ids].sort(), 'Every answer must unlock without a cycle');
+  assert.ok(!availableDialogues(new Set(['identity'])).some(d=>d.id==='believe'));
+  assert.ok(availableDialogues(new Set(['identity','lied'])).some(d=>d.id==='believe'));
+  assert.ok(availableDialogues(new Set(['age'])).some(d=>d.id==='hurry'));
 });
 test('all three core answers are unchanged from the deployed original', () => {
   const original = JSON.parse(readFileSync(new URL('./core-dialogue.json',import.meta.url),'utf8'));

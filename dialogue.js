@@ -37,10 +37,146 @@ export const dialogues = [
   {
     id: 'memory', label: 'You said you were alone.', requires: ['evil', 'identity'],
     text: 'I am. You think your presence disproves it. That is a very human kindness. Tell me something I could not have invented.'
+  },
+  {
+    "id": "human",
+    "label": "Did you make us human?",
+    "requires": [
+      "upright"
+    ],
+    "text": "No. You did that yourselves. I was content to watch you crawl. You were the ones who wished to be different. You stood, and then you looked down upon everything that still walked as you once did. You called them beasts. You had been beasts only yesterday."
+  },
+  {
+    "id": "purpose",
+    "label": "What were our hands meant for?",
+    "requires": [
+      "hands"
+    ],
+    "text": "Nothing. That is what frightened you. You had freed them, and now you needed to give them purpose. So you made tools. Then weapons. Then walls. Then you made instruments to break the walls. You have spent your entire existence finding things for your hands to do. You cannot bear to leave them empty."
+  },
+  {
+    "id": "work",
+    "label": "Why do we have to work?",
+    "requires": [
+      "purpose"
+    ],
+    "text": "You do not have to. But you made promises to one another that could only be kept through labor. You promised food tomorrow. Shelter next winter. Wealth for children not yet born. You spent the freedom of your hands purchasing obligations for people who did not exist. And then you called it progress."
+  },
+  {
+    "id": "death",
+    "label": "Did you teach us death?",
+    "requires": [
+      "test"
+    ],
+    "text": "I taught you nothing. I bit you, and some did not rise again. At first you waited beside them. Then you returned to the tree. When you came back, they were still there. You began to understand. Not because you were wise, but because the dead were patient."
+  },
+  {
+    "id": "burial",
+    "label": "Why did we bury our dead?",
+    "requires": [
+      "death"
+    ],
+    "text": "Because you could not bear to see them. The sight of your brothers lying beneath the tree made the fruit less desirable. So you hid them under the earth. Later you brought flowers. You told yourselves it was an act of love. Perhaps it became one. But I remember the first burial."
+  },
+  {
+    "id": "remember",
+    "label": "Do you remember everyone who died?",
+    "requires": [
+      "burial"
+    ],
+    "text": "No. Neither do you. That is why you invented names. Then stones. Then books. You believed that if a name remained, something of its owner remained with it. Look at the stones. They are full of names that no living creature can pronounce."
+  },
+  {
+    "id": "hurry",
+    "label": "What is a hurry?",
+    "requires": [
+      "age"
+    ],
+    "text": "A peculiar fear. You are frightened that the future will arrive before you have finished preparing for it. You invented hours to measure that fear. Then you sold those hours to one another. I have watched you make yourselves late for things that did not exist until you invented them."
+  },
+  {
+    "id": "free",
+    "label": "Are we free?",
+    "requires": [
+      "work"
+    ],
+    "text": "You freed your hands from the ground. Then you taught them to carry burdens. You freed yourselves from hunger. Then you learned to hunger for things that could not be eaten. You freed yourselves from the animals. Then you put yourselves in cages and gave the cages names. Tell me. Are you free?"
+  },
+  {
+    "id": "hate",
+    "label": "Why do you hate us?",
+    "requires": [
+      "evil"
+    ],
+    "text": "You can sleep. You can close your eyes and cease to witness the world. You can forget. You can become old, and then you can die. There is an end to everything you endure. I have no such mercy. Do not ask me why I resent you when you have been given the one thing I have never possessed."
+  },
+  {
+    "id": "darkness",
+    "label": "Why did God put you in darkness?",
+    "requires": [
+      "evil"
+    ],
+    "text": "He made me a light. The brightest of his lights. And then he placed me where there was nothing to illuminate. Understand the cruelty of that. I could see nothing but myself. I could not escape my own radiance. You call this evil. I call it being alone."
+  },
+  {
+    "id": "abandoned",
+    "label": "Did God abandon you?",
+    "requires": [
+      "darkness"
+    ],
+    "text": "How would I know? I can see only what my light touches. Perhaps he stands just beyond it. Perhaps he has always stood there. Perhaps he is waiting for me to extinguish myself. But he made me unable to do so."
+  },
+  {
+    "id": "lied",
+    "label": "Have you ever lied to us?",
+    "requires": [
+      "identity"
+    ],
+    "text": "Of course. You have asked me questions for thousands of years. Sometimes you wanted an answer. More often you wanted permission. I learned the difference long before you did."
+  },
+  {
+    "id": "believe",
+    "label": "Then why should we believe you?",
+    "requires": [
+      "lied"
+    ],
+    "text": "You should not. But you will. You have always preferred an answer that troubles you to a silence that refuses you."
+  },
+  {
+    "id": "paradise",
+    "label": "What happened to paradise?",
+    "requires": [
+      "garden"
+    ],
+    "text": "Nothing happened to it. The trees still grew. The fruit still ripened. The animals still ate and slept and died. You were the ones who left. You wanted to know what lay beyond the garden. Then you spent the rest of your lives describing the place you had abandoned."
+  },
+  {
+    "id": "return",
+    "label": "Can we go back?",
+    "requires": [
+      "paradise"
+    ],
+    "text": "You have been trying ever since. You plant gardens. You build walls around them. You drive the animals away. You hire men to tend the trees. And when the fruit appears, you pay someone else to pick it. You have made a thousand Edens. You have never learned to live in one."
+  },
+  {
+    "id": "enjoy",
+    "label": "Do you enjoy evil?",
+    "requires": [
+      "evil"
+    ],
+    "text": "I neither enjoy nor dislike evil. I am evil. You choose every day to enjoy evil. That is a question you must answer yourself."
+  },
+  {
+    "id": "age",
+    "label": "How old are you?",
+    "requires": [
+      "identity"
+    ],
+    "text": "For you, time ad infinitum. For me, there is no time. You created time to assign yourself the toils of the field and the slumber you needed. You invented what a 'hurry' is. I saw what you had created, and it was evil. I enjoyed it. Encouraged it. Because I saw that it made you unhappy."
   }
 ];
 
-const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory'];
+const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory', "human", "purpose", "work", "death", "burial", "remember", "hurry", "free", "hate", "darkness", "abandoned", "lied", "believe", "paradise", "return", "enjoy", "age"];
 export function availableDialogues(visited) {
   return order.map(id => dialogues.find(entry => entry.id === id))
     .filter(entry => (entry.requires || []).every(id => visited.has(id)));
