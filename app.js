@@ -1,4 +1,4 @@
-import { opening, DialogueJourney } from './dialogue.js';
+import { opening, DialogueJourney } from './dialogue.js?v=related-choices-1';
 import { Narrator } from './speech.js';
 import { Portrait } from './portrait.js';
 const $ = id => document.getElementById(id);
