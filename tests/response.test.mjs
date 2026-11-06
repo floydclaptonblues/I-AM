@@ -56,7 +56,7 @@ test('Replay can restart the effect repeatedly without old timers revealing an a
 });
 
 test('failed narration releases the portrait and retains the answer',()=>{
-  const s=setup();s.held.start(answer);s.fire(3000);s.utterances[0].onerror();
+  const s=setup();s.held.start(answer);s.fire(3000);s.utterances[0].onerror({error:'not-allowed'});
   assert.equal(s.held.active,false);assert.equal(s.captions.at(-1),answer);assert.equal(s.portrait.still,false);
 });
 
