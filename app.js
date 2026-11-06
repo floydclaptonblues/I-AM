@@ -7,8 +7,7 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const synth = window.speechSynthesis;
 const saved = loadSession();
 const journey = saved?.journey || new DialogueJourney();
-let resuming = journey.history.length > 0;
-let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches, entered = false;
+let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches;
 let current = journey.current;
 let background = { still: 'assets/garden-still.webp', animated: null };
 let sentence = opening;
@@ -84,15 +83,6 @@ function returnToQuestions(first = false) {
 }
 $('back-questions').addEventListener('click', () => returnToQuestions());
 $('first-questions').addEventListener('click', () => returnToQuestions(true));
-$('enter').addEventListener('click', () => {
-  if (entered) return;
-  entered=true; $('threshold').hidden=true; $('encounter').hidden=false; $('encounter').inert=false;
-  portrait.start(); updateMotion();
-  $('question-list').querySelector('button')?.focus({preventScroll:true});
-  if (resuming) { showText(current.text); $('status').textContent='Your place is remembered. Select Replay to hear the response.'; }
-  else play();
-  remember();
-});
 $('listen').addEventListener('click', () => play());
 $('stop').addEventListener('click', () => { narrator.stop(); showText(current.text); });
 $('mute').addEventListener('click', () => {
@@ -114,7 +104,7 @@ function updateMotion() {
   $('motion').textContent=frozen?'MOTION':'STILL';
   $('motion').setAttribute('aria-label',frozen?'Allow motion':'Pause all motion');
   $('motion').disabled=reduced.matches;
-  $('garden-image').src=entered && !frozen && background.animated ? background.animated : background.still;
+  $('garden-image').src=!frozen && background.animated ? background.animated : background.still;
 }
 $('motion').addEventListener('click',()=>{still=!still;updateMotion();remember();});
 reduced.addEventListener('change',()=>{still=reduced.matches;updateMotion();});
@@ -139,29 +129,26 @@ function askToRestart() {
   $('restart-dialog').showModal(); $('cancel-restart').focus();
 }
 $('restart').addEventListener('click', askToRestart);
-$('restart-entry').addEventListener('click', askToRestart);
 $('cancel-restart').addEventListener('click', () => $('restart-dialog').close());
 $('confirm-restart').addEventListener('click', () => {
-  narrator.stop(); journey.reset(); current=journey.current; resuming=false;
+  narrator.stop(); journey.reset(); current=journey.current;
   $('history').replaceChildren();
   $('restart-dialog').close();
-  $('enter').textContent='[ ENTER ]'; $('restart-entry').hidden=true;
-  showText(current.text); renderChoices({ focus: entered });
-  if (!entered) $('enter').focus();
+  showText(current.text); renderChoices({ focus: true });
   $('status').textContent='The conversation has begun again.';
   remember();
 });
 document.addEventListener('keydown',event=>{
-  if(!entered || $('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
+  if($('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
   if(/^[1-9]$/.test(event.key)){
     const entry=journey.choices[Number(event.key)-1];if(entry){event.preventDefault();choose(entry);}
   }else if(event.key==='Escape'){narrator.stop();showText(current.text);}
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.hidden){narrator.stop();portrait.suspend();showText(current.text);}
-  else if(entered){portrait.start();updateMotion();}
+  else {portrait.start();updateMotion();}
 });
 window.addEventListener('pagehide',()=>{narrator.stop();portrait.suspend();});
-window.addEventListener('pageshow',event=>{if(event.persisted&&entered){portrait.start();updateMotion();}});
-if (resuming) { $('enter').textContent='[ CONTINUE ]'; $('restart-entry').hidden=false; }
-showText(current.text);renderChoices();updateSound();updateMotion();
+window.addEventListener('pageshow',event=>{if(event.persisted){portrait.start();updateMotion();}});
+showText(current.text);renderChoices();updateSound();portrait.start();updateMotion();
+$('status').textContent = journey.history.length ? 'Your place is remembered. Select a question or Replay.' : 'Select a question or Replay to hear the serpent.';

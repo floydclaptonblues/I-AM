@@ -57,5 +57,6 @@ test('visitor-facing copy contains no editorial explanation or old landing-page 
     assert.doesNotMatch(html,pattern);
   }
   assert.doesNotMatch(app,/Every answer is the testimony|voice-note|myth told/);
-  assert.match(html,/hidden inert/);assert.match(html,/role="status"/);assert.match(html,/id="review-dialog"/);
+  assert.doesNotMatch(html,/<main[^>]*(?:hidden|inert)|id="(?:threshold|enter)"/);
+  assert.match(html,/role="status"/);assert.match(html,/id="review-dialog"/);
 });

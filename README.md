@@ -1,6 +1,6 @@
 # I AM
 
-A static dialogue encounter. Open the site, enter, and question the serpent.
+A static dialogue encounter. Open the site and question the serpent.
 
 ## Run
 
@@ -16,9 +16,9 @@ The local server uses http://127.0.0.1:4173. GitHub Pages serves `main` from `/(
 
 ## Interaction
 
-- Enter starts the opening line from a user gesture. No automatic audio before entry. Returning visitors see Continue; their last answer is restored silently, ready for Replay or the next question.
+- The garden opens directly into the conversation. Returning visitors see their saved answer and choices immediately. Audio starts only when a visitor selects a question or Replay.
 - Progress is saved after each choice or navigation action in this browser’s local storage, including the Back trail, unlocks, Review transcript, and sound/motion preferences. It does not sync between devices. Cleared browser data/private-session expiry removes the save. Missing, invalid, or unavailable storage never blocks the conversation.
-- Start Over is available on the returning entry screen and in the console. Its confirmation offers Keep My Place; confirming resets the saved conversation and transcript while retaining sound/motion preferences. First Questions still preserves progress.
+- Start Over is available in the console. Its confirmation offers Keep My Place; confirming resets the saved conversation and transcript while retaining sound/motion preferences. First Questions still preserves progress.
 - Six numbered questions are initially available, with 26 exchanges in total. Follow-up questions unfold through the conversation: uprightness leads to hands, purpose, work, and freedom; the test leads to death, burial, and memory; identity leads to age, hurry, lies, and belief; the garden leads to paradise and return; evil leads to light, darkness, abandonment, resentment, and enjoyment.
 - After each answer, only its related follow-ups appear (at most four). BACK restores the previous answer and question group; FIRST QUESTIONS returns to the six opening questions. These controls stop narration without replaying it or adding duplicate transcript entries. Unlocked knowledge and the Review transcript are preserved.
 - Select questions with mouse/touch, Tab + Enter, or number keys for the current visible group. Focus moves into each new group and returns to the previous choice when going back. Escape stops narration outside the Review dialog.
@@ -39,7 +39,7 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 
 ## Source map
 
-- `index.html`: entry screen, original console hardware, portrait window, response panel, choices, controls, Review dialog
+- `index.html`: original console hardware, portrait window, response panel, choices, controls, Review dialog
 - `styles.css`: metal finish, responsive layout, green/amber typography, restrained CRT effects
 - `app.js`: encounter state, transcripts, question selection, captions, sound/motion controls
 - `dialogue.js`: original answers, additional dialogue, unlock requirements
