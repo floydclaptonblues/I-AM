@@ -38,7 +38,7 @@ export class Narrator {
     if (hadUtterance) this.synth?.cancel();
     this.onState(state);
   }
-  play(text, { rate = 0.82, pitch = 0.4 * 2 ** (-2 / 12), volume = 1 } = {}) {
+  play(text, { rate = 1.0, pitch = 0.4 * 2 ** (-2 / 12), volume = 1 } = {}) {
     this.stop();
     if (!this.synth || !this.Utterance) { this.onState('unavailable'); return; }
     const generation = this.generation;

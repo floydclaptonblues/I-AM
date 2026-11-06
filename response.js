@@ -22,7 +22,7 @@ export class HeldResponse {
         this.timer = this.setTimer(() => {
           if (generation === this.generation) this.cancel();
         }, 1500);
-      } else this.speak(text, { rate: 0.70, volume: 0.55 });
+      } else this.speak(text, { rate: 0.85, volume: 0.55 });
     }, 3000);
   }
   observe(state) {

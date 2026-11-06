@@ -1,8 +1,8 @@
 import { opening, DialogueJourney } from './dialogue.js?v=short-path-1';
 import { loadSession, saveSession } from './session.js?v=short-path-1';
-import { Narrator, FirstVisitGreeting } from './speech.js?v=voice-3';
+import { Narrator, FirstVisitGreeting } from './speech.js?v=voice-4';
 import { Portrait } from './portrait.js';
-import { HeldResponse } from './response.js?v=voice-3';
+import { HeldResponse } from './response.js?v=voice-4';
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const synth = window.speechSynthesis;

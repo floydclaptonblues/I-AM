@@ -24,7 +24,7 @@ test('the held response leaves three seconds of silence before revealing or spea
   assert.equal(s.held.active,true);assert.deepEqual(s.captions,['']);assert.equal(s.utterances.length,0);
   assert.equal(s.waits.at(-1),true);assert.equal(s.frames.at(-1),'closed');
   s.fire(3000);assert.equal(s.captions.at(-1),answer);assert.equal(s.waits.at(-1),false);
-  assert.equal(s.utterances[0].volume,0.55);assert.equal(s.utterances[0].rate,0.70);assert.equal(s.utterances[0].pitch,0.4 * 2 ** (-2 / 12));
+  assert.equal(s.utterances[0].volume,0.55);assert.equal(s.utterances[0].rate,0.85);assert.equal(s.utterances[0].pitch,0.4 * 2 ** (-2 / 12));
 });
 
 test('the mouth and blink stay frozen during speech and normal motion resumes afterward',()=>{
@@ -68,5 +68,5 @@ test('reduced motion remains respected when the special response finishes',()=>{
 test('special voice settings do not leak into subsequent ordinary dialogue',()=>{
   const s=setup();s.held.start(answer);s.fire(3000);s.utterances[0].onstart();s.utterances[0].onend();
   s.narrator.play('I was always here.');
-  assert.equal(s.utterances[1].rate,0.82);assert.equal(s.utterances[1].pitch,0.4 * 2 ** (-2 / 12));assert.equal(s.utterances[1].volume,1);
+  assert.equal(s.utterances[1].rate,1.0);assert.equal(s.utterances[1].pitch,0.4 * 2 ** (-2 / 12));assert.equal(s.utterances[1].volume,1);
 });

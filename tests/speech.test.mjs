@@ -24,7 +24,7 @@ test('plays complete monologues sentence by sentence and finishes silently', () 
 
 test('faster deeper speech leaves 1.4 seconds of silence before the next sentence', () => {
   const s = setup(); s.narrator.play('First. Second.');
-  assert.equal(s.utterances[0].rate, 0.82); assert.equal(s.utterances[0].pitch, 0.4 * 2 ** (-2 / 12));
+  assert.equal(s.utterances[0].rate, 1.0); assert.equal(s.utterances[0].pitch, 0.4 * 2 ** (-2 / 12));
   s.utterances[0].onstart(); s.utterances[0].onend();
   assert.deepEqual([...s.delays.values()], [1400]);
   assert.deepEqual(s.sentences, ['First.']);
