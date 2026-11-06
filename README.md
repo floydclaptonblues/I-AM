@@ -1,60 +1,54 @@
 # I AM
 
-A garden. A witness. A story that remembers you differently.
+A static dialogue encounter. Open the site, enter, and question the serpent.
 
-An atmospheric, responsive, static web experience with five selectable monologues, an animated SVG serpent, browser speech synthesis, sentence captions with word highlighting when available, full transcripts, mute/replay/stop, and a still-garden control. No build step, dependencies, accounts, analytics, API keys, or backend.
+## Run
 
-## Run locally
-
-Use Node.js 18 or newer:
+Node.js 18+; no packages or build step required.
 
 ```sh
 npm start
+npm test
+npm run check
 ```
 
-Open http://127.0.0.1:4173. Run `npm test` for the narration lifecycle tests and `npm run check` for JavaScript syntax validation.
+The local server uses http://127.0.0.1:4173. GitHub Pages serves `main` from `/(root)` at https://floydclaptonblues.github.io/I-AM/. Every URL in the application is relative to support that project path.
 
-## GitHub Pages
+## Interaction
 
-This repository is ready for branch-based Pages deployment; deployment is not enabled by the source code itself.
+- Enter starts the opening line from a user gesture. No automatic audio before entry.
+- Six numbered questions are initially available. Uprightness unlocks the hands answer; evil unlocks the light answer; evil plus identity unlocks the solitude contradiction.
+- Select questions with mouse/touch, Tab + Enter, or number keys 1–9. Escape stops narration outside the Review dialog.
+- Sound toggles audio, Replay repeats the selected answer, Silence stops it, Still pauses all visual motion, and Review opens the full conversation transcript.
+- Responses follow actual sentence starts; the active word highlights when the browser voice supplies word boundaries. At the end, the whole answer remains in the scrollable text panel.
+- Mute, errors, missing voices, or a stalled speech engine leave all answer text available. Unmuting never unexpectedly starts audio.
+- The portrait has separate closed, partial, open, and closed-mouth blink frames. Mouth pulses are triggered by real word events; silence, cancellation, hidden pages, and reduced motion close the mouth. Voices without word boundaries receive only a brief sentence-onset movement, not a simulated talking loop.
+- Reduced motion disables all portrait movement, blinking, interference, and the animated background. The user's operating-system preference takes priority over the Still switch.
+- Native dialog focus management, labeled controls, a skip link, text transcripts, and a polite screen-reader status region remain available. Rapid caption changes are not announced through a live region.
 
-In repository **Settings → Pages**, select **Deploy from a branch**, **main**, **/(root)**, then Save. GitHub will publish the static files without a build dependency. All asset URLs are relative, so the `/I-AM/` project path is supported. Wait for the Pages deployment to succeed and open the URL shown in Settings before claiming the site is live. No custom domain is configured.
+## Narrative and assets
 
-## Narrative
+The three core answers (`garden`, `test`, and `evil`) are unchanged from commit `3af1b1df8fba015e53ff6f0780bb3764befa9c48`. Other answers expand the conversation. No scientific or editorial disclaimer appears inside the experience; all assertions are first-person character speech.
 
-The first three answers in `dialogue.js` preserve the author's garden, test, and evil passages with light grammatical edits. Two additional answers develop the uprightness and toil themes. The opening line is “I was always here.” Nothing speaks before the visitor interacts.
+The metal, grain, frame, controls, and interface are original code-native artwork. No Fallout images, logos, textures, or sound files are included. See [asset provenance](assets/PROVENANCE.md) for the supplied GIF/video and the derived portrait set.
 
-The footer's “A note in the margin” identifies the serpent as an unreliable fictional witness and distinguishes its account from established paleoanthropology. It links to [Smithsonian Human Origins: Walking Upright](https://humanorigins.si.edu/human-characteristics/walking-upright). The claims about concealing death through burial, fruit-driven uprightness, and discovery of death belong to the character, not a scientific explanation.
+Browser speech synthesis chooses available English voices, preferring David, Daniel, or George. Rate is 0.82 and pitch is 0.65. Voice quality, word timing, and availability depend on the browser/OS; this is speech-event articulation, not phoneme-perfect lip synchronization. The app requests no microphone access and runs no custom AI service. Some browser voices use the browser vendor's online speech services.
 
-## Background provenance
+## Source map
 
-`assets/eden-figs.gif` is a byte-for-byte copy of the author's supplied **Eden Garden Figs Animation.gif** (475 × 356 pixels, nine frames). `assets/garden-still.webp` is a still extracted from its first frame. `assets/background.json` selects the sources. The original drawn `garden-still.svg` is only a last-resort load-error fallback. The animated GIF is never initially embedded for visitors whose system requests reduced motion; those visitors see the static first frame.
+- `index.html`: entry screen, original console hardware, portrait window, response panel, choices, controls, Review dialog
+- `styles.css`: metal finish, responsive layout, green/amber typography, restrained CRT effects
+- `app.js`: encounter state, transcripts, question selection, captions, sound/motion controls
+- `dialogue.js`: original answers, additional dialogue, unlock requirements
+- `speech.js`: speech synthesis lifecycle and cancellation guards
+- `portrait.js`: discrete mouth states and independent blinking
+- `assets/`: original garden GIF, extracted still, portrait sheet, texture, favicon, provenance
+- `tests/`: speech lifecycle, unchanged core dialogue, unlock logic, portrait motion and copy audit
+- `scripts/serve.mjs`: local static server
+- `.nojekyll`: plain static Pages serving
 
-## Voice and accessibility
+## Validation and recovery
 
-- Questions, replay, mute, stop, disclosure controls, and the skip link support keyboard interaction and visible focus.
-- Mute immediately cancels speech; all answer text stays visible. Unmute does not unexpectedly restart narration. Press Replay to hear it.
-- Captions follow actual sentence-start events; word highlighting and jaw pulses follow `SpeechSynthesisUtterance` word-boundary events when the voice provides them.
-- Browser speech synthesis does not expose a phoneme stream or audio amplitude. Jaw motion is approximate articulation, not phoneme-perfect lip sync. Voices without word boundaries use a rhythmic fallback only during actual speaking events. Voice, accent, and timing vary by OS/browser; see [MDN boundary event documentation](https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesisUtterance/boundary_event).
-- Short sentence utterances reduce long-speech engine failures. A generation token prevents cancelled callbacks from resurrecting old answers. Failed or stalled voices expose the full written answer; the visitor can retry.
-- “Still garden” freezes the background and character. System reduced-motion preferences also disable jaw and idle animation, and take priority over the motion button.
-- Full answers are available in an ordinary text disclosure. Rapid word updates are not an ARIA live region, avoiding repeated interruption of screen readers. Status changes use a polite status region. On phones, selecting a question focuses and scrolls to its answer.
-- Leaving or hiding the page stops narration. There is no microphone access. Browser/OS voices may use their own online services; the site itself sends no narration request to a custom server.
+`npm test` covers 13 cases including rapid switching, cancellation, failed speech, locked questions, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
 
-## Files
-
-| File | Purpose |
-| --- | --- |
-| `index.html` | Page, serpent artwork, controls, myth note |
-| `styles.css` | Responsive garden composition and motion preferences |
-| `app.js` | Interaction, captions, background and jaw animation |
-| `speech.js` | Narration state and cancellation |
-| `dialogue.js` | Opening and five monologues |
-| `assets/` | Original GIF, still frame, fallback art, favicon and configuration |
-| `scripts/serve.mjs` | Dependency-free local preview |
-| `tests/speech.test.mjs` | Speech lifecycle and narrative regression tests |
-| `.nojekyll` | Plain static Pages serving |
-
-## Verification
-
-Seven automated tests cover complete sentence sequencing, rapid switching, stop/cancellation, boundary forwarding, missing/failed speech, stalled startup, and core dialogue retention. Browser checks cover desktop and 390-pixel phone layouts, all five questions, full answers while muted, still-image switching, mobile answer focus, and actual speech-driven sentence changes, word highlighting, and jaw movement. Stopping returns the jaw to zero. These checks do not guarantee every system voice; manually confirm the preferred voice on the intended target browsers before a wider release.
+The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.

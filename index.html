@@ -1,81 +1,33 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b100e">
-  <meta name="description" content="A garden. A witness. A story that remembers you differently. An interactive speculative myth.">
-  <title>I AM — a witness in the garden</title>
-  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
-  <script type="module" src="app.js"></script>
-</head>
-<body>
-  <a class="skip" href="#questions">Skip to questions</a>
-  <div class="garden" aria-hidden="true"><img id="garden-image" src="assets/garden-still.webp" alt=""></div>
-  <div class="veil" aria-hidden="true"></div>
-  <header class="masthead">
-    <a class="wordmark" href="./" aria-label="I AM, return to beginning">I AM<span class="mark">⁖</span></a>
-    <span class="archive">A WITNESS IN THE GARDEN</span>
-    <span class="location">EDEN / UNDATED</span>
-  </header>
-  <main>
-    <section class="encounter" aria-labelledby="title">
-      <div class="introduction"><p class="eyebrow"><span></span> SOMETHING REMAINS</p>
-        <h1 id="title">Before the word,<br>there was <em>desire.</em></h1>
-        <p class="invitation">You remember a garden.<br>Something in it remembers you.</p>
-      </div>
-      <div class="apparition" aria-hidden="true">
-        <div class="halo"></div>
-        <svg class="serpent" viewBox="0 0 520 460" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="skin" x1="170" y1="80" x2="350" y2="390" gradientUnits="userSpaceOnUse"><stop stop-color="#d7d1ac"/><stop offset=".36" stop-color="#7c8a6b"/><stop offset=".72" stop-color="#34483e"/><stop offset="1" stop-color="#10221b"/></linearGradient>
-            <linearGradient id="belly" x1="232" y1="150" x2="292" y2="437" gradientUnits="userSpaceOnUse"><stop stop-color="#e4dab4"/><stop offset=".5" stop-color="#7d8870"/><stop offset="1" stop-color="#16291f"/></linearGradient>
-            <pattern id="scales" width="24" height="20" patternUnits="userSpaceOnUse"><path d="M0 0Q12 22 24 0M-12 10Q0 32 12 10M12 10Q24 32 36 10" stroke="#0c1b14" stroke-opacity=".33" stroke-width="1"/></pattern>
-            <filter id="eyeGlow"><feGaussianBlur stdDeviation="3"/></filter>
-          </defs>
-          <path d="M180 450C335 427 406 384 342 300C316 265 258 266 269 217L219 186C178 250 229 291 267 323C316 363 246 389 160 409Z" fill="url(#skin)" stroke="#64755d" stroke-opacity=".35"/>
-          <path d="M180 450C335 427 406 384 342 300C316 265 258 266 269 217L219 186C178 250 229 291 267 323C316 363 246 389 160 409Z" fill="url(#scales)"/>
-          <path d="M224 204C214 258 264 291 291 324C336 380 231 420 184 434L200 449C305 424 371 383 326 322C285 267 251 254 259 211Z" fill="url(#belly)"/>
-          <g stroke="#1b3024" stroke-opacity=".55"><path d="M219 237L266 238M224 251L272 252M234 268L286 270M251 286L301 289M267 304L315 309M285 327L331 334M298 350L339 359M296 373L326 392M277 391L301 411M247 410L265 428M215 424L228 442"/></g>
-          <g class="head">
-            <path d="M157 169L183 115Q211 73 257 84L306 111L351 143L354 169Q318 195 282 204L220 210L174 194Z" fill="url(#skin)" stroke="#a3ac88" stroke-width="1.3"/>
-            <path d="M157 169L183 115Q211 73 257 84L306 111L351 143L354 169Q318 195 282 204L220 210L174 194Z" fill="url(#scales)"/>
-            <path d="M166 168Q250 194 351 163L349 179Q256 217 179 187Z" fill="#080d0a"/>
-            <g id="jaw"><path d="M169 176Q253 209 349 171L335 197Q269 234 213 214L180 195Z" fill="url(#belly)" stroke="#9ba27c" stroke-opacity=".55"/><path d="M198 193L204 210M224 201L228 219M251 204L253 220M279 201L280 214M307 191L309 204" stroke="#566449"/></g>
-            <path d="M193 181L200 201L204 184M320 180L316 195L328 176" fill="#e7dfb9"/>
-            <path d="M169 167Q253 193 352 163" stroke="#b5bb95" stroke-width="2"/>
-            <path d="M194 135Q215 113 242 136Q219 158 198 143Z" fill="#0c1710"/>
-            <ellipse cx="219" cy="136" rx="13" ry="9" fill="#d8bd72" filter="url(#eyeGlow)" opacity=".7"/>
-            <ellipse cx="219" cy="136" rx="12" ry="8" fill="#d4bc78"/><ellipse cx="221" cy="136" rx="2.2" ry="8" fill="#101810"/><circle cx="215" cy="133" r="2" fill="#fff1cb"/>
-            <path d="M188 129Q211 111 242 129M250 91L237 112L264 125L294 119M264 125L275 147L312 149L338 140M185 117L209 102L237 112" stroke="#d5d4ae" stroke-opacity=".4"/>
-            <ellipse cx="330" cy="156" rx="4" ry="2.6" fill="#14231a"/>
-          </g>
-        </svg>
-        <span class="specimen">FIG. 01 &nbsp; / &nbsp; THE ONE WHO REMAINED</span>
-      </div>
-    </section>
-    <section class="conversation" aria-label="Speak with the serpent">
-      <div class="voice-panel">
-        <div class="voice-heading"><span id="fragment" class="eyebrow">00 · THE PRESENCE</span><span id="status" role="status">Waiting for you</span></div>
-        <div class="caption-wrap"><p id="caption" tabindex="-1">I was always here.</p></div>
-        <div class="voice-controls">
-          <button id="listen" class="listen">Listen <span aria-hidden="true">↗</span></button>
-          <button id="mute" aria-pressed="false">Mute voice</button>
-          <button id="stop" disabled>Stop</button>
-          <button id="motion" aria-pressed="false">Still garden</button>
-        </div>
-        <details id="transcript"><summary>Read the whole answer</summary><p id="full-answer">I was always here.</p></details>
-        <p class="voice-note" id="voice-note">The voice begins only when you ask.</p>
-      </div>
-      <nav id="questions" class="questions" aria-label="Questions for the serpent">
-        <p class="eyebrow">ASK WHAT YOU CAME TO ASK</p>
-        <ol id="question-list"></ol>
-        <p id="progress" class="progress">Five questions. One witness.</p>
-      </nav>
-    </section>
-    <noscript><p class="noscript">This witness needs JavaScript to answer. Enable it for questions and narration. This is speculative fiction, not an account of human evolution.</p></noscript>
-  </main>
-  <footer><span>THE GARDEN HAS NO CLOCK.</span><details class="margin-note"><summary>A note in the margin</summary><div><p>A myth told by an unreliable witness.</p><p>This work imagines Genesis as a compressed story of becoming human. The serpent's claims about fruit, uprightness, death, and burial are speculative fiction, not established paleoanthropology. Human bipedalism developed over millions of years; desire alone does not explain evolution.</p><a href="https://humanorigins.si.edu/human-characteristics/walking-upright" target="_blank" rel="noopener noreferrer">Beyond the garden: Smithsonian Human Origins ↗</a></div></details><span>I AM / I WAS / I REMAIN</span></footer>
-</body>
-</html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#11130e"><meta name="description" content="I was always here.">
+<title>I AM</title><link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+<link rel="preload" as="image" href="assets/serpent-states.webp">
+<link rel="stylesheet" href="styles.css"><script type="module" src="app.js"></script>
+</head><body>
+<div class="garden" aria-hidden="true"><img id="garden-image" src="assets/garden-still.webp" alt=""></div>
+<div class="garden-shade" aria-hidden="true"></div>
+<section id="threshold" class="threshold" aria-label="Enter the garden"><h1>I AM</h1><button id="enter" type="button">[ ENTER ]</button><noscript><p>I was always here.</p><p>JavaScript is required to enter.</p></noscript></section>
+<main id="encounter" class="console" aria-label="Conversation with the serpent" hidden inert>
+<a class="skip" href="#questions">Skip to questions</a>
+<header class="console-top"><span class="engraved">I AM</span><span class="serial" aria-hidden="true">E D E N &nbsp; — &nbsp; 0 0 0</span><i class="screw" aria-hidden="true"></i></header>
+<section class="upper-deck" aria-label="The serpent">
+<div class="hardware hardware-left" aria-hidden="true"><div class="bolt"></div><div class="lamp-housing"><i class="lamp"></i></div><div class="tube"><span></span></div><div class="tube short"><span></span></div><div class="scale"><i></i><i></i><i></i><i></i><i></i></div><div class="bolt"></div></div>
+<div class="portrait-frame"><div class="portrait-screen"><div id="portrait" class="portrait" data-mouth="closed" role="img" aria-label="A green serpent watches you."></div><div class="scanlines" aria-hidden="true"></div><div class="screen-noise" aria-hidden="true"></div></div><div class="nameplate">S E R P E N T</div></div>
+<div class="hardware hardware-right" aria-hidden="true"><div class="bolt"></div><div class="speaker"></div><div class="dial"><i></i></div><div class="status-lights"><i></i><i></i><i></i></div><div class="bolt"></div></div>
+</section>
+<section class="lower-deck" aria-label="Dialogue">
+<div class="response-frame"><div class="panel-heading"><span>SERPENT</span><span id="signal" aria-hidden="true">●</span></div><div id="response-scroll" class="response-scroll" tabindex="0" aria-label="Serpent response"><p id="caption" tabindex="-1">I was always here.</p></div></div>
+<div class="control-rail" aria-label="Conversation controls">
+<button id="mute" type="button" aria-pressed="false" aria-label="Mute voice"><i aria-hidden="true"></i><span>SOUND ON</span></button>
+<button id="listen" type="button" aria-label="Replay response">REPLAY</button>
+<button id="stop" type="button" disabled aria-label="Stop narration">SILENCE</button>
+<button id="motion" type="button" aria-pressed="false" aria-label="Pause all motion">STILL</button>
+<button id="review" type="button" aria-controls="review-dialog">REVIEW</button>
+</div>
+<nav id="questions" class="choices-frame" aria-label="Questions for the serpent"><ol id="question-list"></ol></nav>
+<footer class="console-bottom"><i class="screw" aria-hidden="true"></i><div class="bottom-grille" aria-hidden="true"></div><span class="engraved" aria-hidden="true">I AM</span><i class="screw" aria-hidden="true"></i></footer>
+</section><p id="status" class="sr-only" role="status" aria-live="polite"></p></main>
+<dialog id="review-dialog" aria-labelledby="review-title"><header><h2 id="review-title">REVIEW</h2><button id="close-review" type="button" aria-label="Close conversation review">CLOSE</button></header><div id="history"></div></dialog>
+</body></html>
