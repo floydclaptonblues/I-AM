@@ -1,5 +1,5 @@
-import { opening, DialogueJourney } from './dialogue.js?v=first-light-1';
-import { loadSession, saveSession } from './session.js?v=first-light-1';
+import { opening, DialogueJourney } from './dialogue.js?v=short-path-1';
+import { loadSession, saveSession } from './session.js?v=short-path-1';
 import { Narrator, FirstVisitGreeting } from './speech.js?v=first-light-1';
 import { Portrait } from './portrait.js';
 import { HeldResponse } from './response.js?v=first-light-1';

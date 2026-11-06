@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { dialogues, DialogueJourney, availableDialogues } from '../dialogue.js';
 import { loadSession, saveSession } from '../session.js';
 
-const path = ['identity','age','before-humans','why-wait','before-light','father-brighter','fill-darkness','darkness-fear','darkness-end','shadows','father-brighter','god-knows','believe-father','want-god','nothing-darkness','darkness-ended','other-lights','names-of-lights','called-back','happy','certain-light'];
+const path = ['identity','age','before-humans','why-wait','before-light','father-brighter','god-knows','believe-father','want-god','fill-darkness','darkness-end','nothing-darkness','darkness-ended','called-back','happy','certain-light'];
 function reachLastQuestion() {
   const journey = new DialogueJourney();
   for (const id of path) {
@@ -27,7 +27,9 @@ test('all 26 earlier exchanges and their prerequisites remain unchanged', () => 
 
 test('the final question stays hidden through the gradual discovery path', () => {
   const journey = reachLastQuestion();
-  assert.ok(journey.visited.size >= 18);
+  assert.equal(path.length, 16);
+  assert.equal(new Set(path).size, path.length, 'The route must not repeat a question');
+  assert.equal(journey.visited.size, 16);
   assert.ok(journey.choices.some(d => d.id === 'you-darkness'));
   assert.ok(journey.choose('you-darkness'));
   assert.equal(journey.current.text, 'Who told you to ask me that?');
@@ -37,14 +39,37 @@ test('the final question stays hidden through the gradual discovery path', () =>
 
 test('the obsession and identity gates cannot be bypassed by unrelated discoveries', () => {
   const all = new Set(dialogues.map(d => d.id));
-  for (const required of ['nothing-darkness','fill-darkness','darkness-fear','shadows']) {
+  for (const required of ['nothing-darkness','fill-darkness']) {
     const visited = new Set(all); visited.delete(required);
     assert.ok(!availableDialogues(visited).some(d => d.id === 'darkness-ended'));
   }
-  for (const required of ['darkness-ended','other-lights','happy']) {
+  for (const required of ['darkness-ended','happy']) {
     const visited = new Set(all); visited.delete(required);
     assert.ok(!availableDialogues(visited).some(d => d.id === 'certain-light'));
   }
+});
+
+test('the final question still requires sixteen distinct discoveries across all three themes', () => {
+  const required = new Set();
+  function collect(id) {
+    for (const parent of dialogues.find(d => d.id === id).requires || []) {
+      if (required.has(parent)) continue;
+      required.add(parent); collect(parent);
+    }
+  }
+  collect('you-darkness');
+  assert.equal(required.size, 16);
+  assert.deepEqual([...required].sort(), [...path].sort());
+  for (const id of ['father-brighter','believe-father','want-god','fill-darkness','darkness-end','nothing-darkness','called-back','happy']) assert.ok(required.has(id));
+});
+
+test('the earlier longer route and its saved unlocks still restore', () => {
+  const earlier = ['identity','age','before-humans','why-wait','before-light','father-brighter','fill-darkness','darkness-fear','darkness-end','shadows','father-brighter','god-knows','believe-father','want-god','nothing-darkness','darkness-ended','other-lights','names-of-lights','called-back','happy','certain-light','you-darkness'];
+  const journey = new DialogueJourney();
+  assert.ok(journey.restore({ trail:['opening',...earlier],history:earlier }));
+  assert.equal(journey.current.id, 'you-darkness');
+  journey.back(); assert.ok(journey.choices.some(d => d.id === 'you-darkness'));
+  assert.ok(journey.visited.has('shadows')); assert.ok(journey.visited.has('other-lights'));
 });
 
 test('Back, saved progress, and repeat visits preserve late-stage choices', () => {

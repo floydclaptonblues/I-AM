@@ -333,9 +333,7 @@ export const dialogues = [
     "text": "I have never considered that.",
     "requires": [
       "nothing-darkness",
-      "fill-darkness",
-      "darkness-fear",
-      "shadows"
+      "fill-darkness"
     ]
   },
   {
@@ -344,7 +342,6 @@ export const dialogues = [
     "text": "What else would I be?",
     "requires": [
       "darkness-ended",
-      "other-lights",
       "happy"
     ]
   },
@@ -411,7 +408,7 @@ const followUps = {
   "father-brighter": ["god-knows","before-light","fill-darkness"],
   "god-knows": ["believe-father","father-brighter"],
   "believe-father": ["want-god","nothing-darkness"],
-  "want-god": ["nothing-darkness","darkness-end","before-light"],
+  "want-god": ["nothing-darkness","darkness-end","before-light","fill-darkness"],
   "nothing-darkness": ["darkness-ended","darkness-fear","shadows","fill-darkness"],
   "darkness-ended": ["certain-light","other-lights","called-back","before-humans"],
   "certain-light": ["you-darkness","darkness-ended","believe-father"],
