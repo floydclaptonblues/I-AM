@@ -16,7 +16,7 @@ The local server uses http://127.0.0.1:4173. GitHub Pages serves `main` from `/(
 
 ## Interaction
 
-- The garden opens directly into the conversation. Returning visitors see their saved answer and choices immediately. Audio starts only when a visitor selects a question or Replay.
+- The garden opens directly into the conversation. Returning visitors see their saved answer and choices immediately. A fresh visitor hears “I was always here.” automatically when browser policy permits. The visit is saved immediately, so returning to any valid save stays silent, including the opening position. A blocked opening offers Hear the Serpent in the console; selecting a question, muting, stopping, or leaving cancels the pending greeting. No entry screen is added.
 - Progress is saved after each choice or navigation action in this browser’s local storage, including the Back trail, unlocks, Review transcript, and sound/motion preferences. It does not sync between devices. Cleared browser data/private-session expiry removes the save. Missing, invalid, or unavailable storage never blocks the conversation.
 - Start Over is available in the console. Its confirmation offers Keep My Place; confirming resets the saved conversation and transcript while retaining sound/motion preferences. First Questions still preserves progress.
 - Six numbered questions are initially available, with 26 exchanges in total. Follow-up questions unfold through the conversation: uprightness leads to hands, purpose, work, and freedom; the test leads to death, burial, and memory; identity leads to age, hurry, lies, and belief; the garden leads to paradise and return; evil leads to light, darkness, abandonment, resentment, and enjoyment.
@@ -53,6 +53,6 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 
 ## Validation and recovery
 
-`npm test` covers 26 cases including rapid switching, cancellation, failed speech, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
+`npm test` covers 31 cases including rapid switching, cancellation, failed speech, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
 
 The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.

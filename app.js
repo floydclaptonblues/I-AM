@@ -1,6 +1,6 @@
 import { opening, DialogueJourney } from './dialogue.js?v=remember-1';
 import { loadSession, saveSession } from './session.js?v=remember-1';
-import { Narrator } from './speech.js';
+import { Narrator, FirstVisitGreeting } from './speech.js?v=greeting-1';
 import { Portrait } from './portrait.js';
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -11,6 +11,7 @@ let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches;
 let current = journey.current;
 let background = { still: 'assets/garden-still.webp', animated: null };
 let sentence = opening;
+let greeting;
 const portrait = new Portrait({ setFrame: state => { $('portrait').dataset.mouth = state; } });
 const stateLabels = { idle: 'Listening.', loading: 'Waiting for voice.', speaking: 'Speaking.', between: 'Speaking.', finished: 'Listening.', paused: 'Paused.', unavailable: 'Voice unavailable. The complete response is available in the dialogue panel and Review.' };
 function showText(text) { $('caption').textContent = text; $('response-scroll').scrollTop = 0; }
@@ -23,6 +24,7 @@ const narrator = new Narrator({
     $('status').textContent = stateLabels[state];
     $('stop').disabled = !['loading','speaking','between','paused'].includes(state);
     if (state === 'finished' || state === 'unavailable') showText(current.text);
+    greeting?.observe(state);
   },
   onSentence(text) { sentence = text; showText(text); },
   onWord(index, length, text) {
@@ -36,7 +38,17 @@ const narrator = new Narrator({
     if (top < 0 || top > panel.clientHeight - 28) panel.scrollTop += top - panel.clientHeight / 2;
   }
 });
+greeting = new FirstVisitGreeting({
+  saved: Boolean(saved), muted,
+  play: () => narrator.play(opening), remember,
+  onBlocked: () => {
+    $('hear-opening').hidden = false;
+    $('status').textContent = 'Select Hear the serpent to hear the opening line.';
+  }
+});
+function cancelGreeting() { greeting.cancel(); $('hear-opening').hidden = true; }
 function play() {
+  cancelGreeting();
   if (muted) { narrator.stop(); showText(current.text); $('status').textContent = 'Sound off. Response ready.'; return; }
   narrator.play(current.text);
 }
@@ -72,6 +84,7 @@ function renderChoices({ focus = false, focusId = null } = {}) {
   }
 }
 function returnToQuestions(first = false) {
+  cancelGreeting();
   const focusId = first ? journey.trail[1] : current.id;
   narrator.stop();
   if (first) journey.firstQuestions(); else journey.back();
@@ -84,8 +97,10 @@ function returnToQuestions(first = false) {
 $('back-questions').addEventListener('click', () => returnToQuestions());
 $('first-questions').addEventListener('click', () => returnToQuestions(true));
 $('listen').addEventListener('click', () => play());
-$('stop').addEventListener('click', () => { narrator.stop(); showText(current.text); });
+$('hear-opening').addEventListener('click', () => play());
+$('stop').addEventListener('click', () => { cancelGreeting(); narrator.stop(); showText(current.text); });
 $('mute').addEventListener('click', () => {
+  cancelGreeting();
   muted=!muted; narrator.stop(); showText(current.text);
   updateSound();
   $('status').textContent=muted?'Sound off.':'Sound on. Select Replay to hear the response.';
@@ -113,6 +128,7 @@ $('garden-image').addEventListener('error',()=>{
 });
 fetch('assets/background.json').then(r=>{if(!r.ok)throw new Error('Background configuration missing');return r.json();}).then(config=>{background=config;updateMotion();}).catch(()=>updateMotion());
 function review() {
+  cancelGreeting();
   narrator.stop(); showText(current.text);
   $('history').replaceChildren();
   for(const item of journey.transcript){
@@ -125,6 +141,7 @@ function review() {
 $('review').addEventListener('click',review);
 $('close-review').addEventListener('click',()=>$('review-dialog').close());
 function askToRestart() {
+  cancelGreeting();
   narrator.stop(); showText(current.text);
   $('restart-dialog').showModal(); $('cancel-restart').focus();
 }
@@ -142,13 +159,14 @@ document.addEventListener('keydown',event=>{
   if($('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
   if(/^[1-9]$/.test(event.key)){
     const entry=journey.choices[Number(event.key)-1];if(entry){event.preventDefault();choose(entry);}
-  }else if(event.key==='Escape'){narrator.stop();showText(current.text);}
+  }else if(event.key==='Escape'){cancelGreeting();narrator.stop();showText(current.text);}
 });
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){narrator.stop();portrait.suspend();showText(current.text);}
-  else {portrait.start();updateMotion();}
+  if(document.hidden){cancelGreeting();narrator.stop();portrait.suspend();showText(current.text);}
+  else {portrait.start();updateMotion();greeting.start();}
 });
 window.addEventListener('pagehide',()=>{narrator.stop();portrait.suspend();});
 window.addEventListener('pageshow',event=>{if(event.persisted){portrait.start();updateMotion();}});
 showText(current.text);renderChoices();updateSound();portrait.start();updateMotion();
 $('status').textContent = journey.history.length ? 'Your place is remembered. Select a question or Replay.' : 'Select a question or Replay to hear the serpent.';
+if (!document.hidden) greeting.start();

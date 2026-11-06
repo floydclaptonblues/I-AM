@@ -1,3 +1,26 @@
+// One opening attempt per fresh visit; a saved visit never queues a greeting.
+export class FirstVisitGreeting {
+  constructor({ saved, muted, play, remember, onBlocked }) {
+    Object.assign(this, { saved, muted, play, remember, onBlocked });
+    this.started = false;
+    this.pending = false;
+  }
+  start() {
+    if (this.saved || this.muted || this.started) return false;
+    this.started = true; this.pending = true;
+    this.remember(); this.play();
+    return true;
+  }
+  observe(state) {
+    if (!this.pending) return;
+    if (state === 'speaking' || state === 'finished') this.pending = false;
+    else if (state === 'unavailable') {
+      this.pending = false; this.onBlocked();
+    }
+  }
+  cancel() { this.started = true; this.pending = false; }
+}
+
 // Every callback is guarded by a generation token: cancelled voices cannot revive old dialogue.
 export class Narrator {
   constructor({ synth, Utterance, onState = () => {}, onSentence = () => {}, onWord = () => {}, setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = id => clearTimeout(id) }) {
