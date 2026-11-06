@@ -1,12 +1,12 @@
-import { dialogues, opening, availableDialogues } from './dialogue.js';
+import { opening, DialogueJourney } from './dialogue.js';
 import { Narrator } from './speech.js';
 import { Portrait } from './portrait.js';
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const synth = window.speechSynthesis;
-const visited = new Set();
+const journey = new DialogueJourney();
 let muted = false, still = reduced.matches, entered = false;
-let current = { id: 'opening', text: opening };
+let current = journey.current;
 let background = { still: 'assets/garden-still.webp', animated: null };
 let sentence = opening;
 const history = [{ text: opening }];
@@ -40,27 +40,44 @@ function play() {
   narrator.play(current.text);
 }
 function choose(entry) {
+  if (!journey.choose(entry.id)) return;
   narrator.stop();
-  current = entry; visited.add(entry.id);
+  current = journey.current;
   history.push({ question:entry.label, text:entry.text });
   showText(entry.text);
-  renderChoices();
+  renderChoices({ focus: true });
   play();
 }
-function renderChoices() {
-  const active = document.activeElement?.dataset?.question;
+function renderChoices({ focus = false, focusId = null } = {}) {
   const fragment = document.createDocumentFragment();
-  availableDialogues(visited).forEach((entry,index) => {
+  journey.choices.forEach((entry,index) => {
     const li = document.createElement('li'), button = document.createElement('button');
     const number = document.createElement('span'); number.className='choice-number'; number.textContent = String(index+1)+'.'; number.setAttribute('aria-hidden','true');
     const label = document.createElement('span'); label.textContent = entry.label;
-    button.type='button'; button.dataset.question=entry.id; button.dataset.visited=String(visited.has(entry.id));
+    button.type='button'; button.dataset.question=entry.id; button.dataset.visited=String(journey.visited.has(entry.id));
     button.setAttribute('aria-pressed',String(current.id === entry.id)); button.setAttribute('aria-controls','caption');
     button.append(number,label); button.addEventListener('click',()=>choose(entry)); li.append(button); fragment.append(li);
   });
   $('question-list').replaceChildren(fragment);
-  if (active) $('question-list').querySelector('[data-question="'+active+'"]')?.focus({preventScroll:true});
+  $('question-navigation').hidden = !journey.canGoBack;
+  $('questions').scrollTop = 0;
+  if (focus) {
+    const target = (focusId && $('question-list').querySelector('[data-question="'+focusId+'"]'))
+      || $('question-list').querySelector('button') || $('back-questions');
+    target.focus({ preventScroll: true });
+  }
 }
+function returnToQuestions(first = false) {
+  const focusId = first ? journey.trail[1] : current.id;
+  narrator.stop();
+  if (first) journey.firstQuestions(); else journey.back();
+  current = journey.current;
+  showText(current.text);
+  renderChoices({ focus: true, focusId });
+  $('status').textContent = first ? 'Opening questions.' : 'Earlier questions.';
+}
+$('back-questions').addEventListener('click', () => returnToQuestions());
+$('first-questions').addEventListener('click', () => returnToQuestions(true));
 $('enter').addEventListener('click', () => {
   if (entered) return;
   entered=true; $('threshold').hidden=true; $('encounter').hidden=false; $('encounter').inert=false;
@@ -108,7 +125,7 @@ $('close-review').addEventListener('click',()=>$('review-dialog').close());
 document.addEventListener('keydown',event=>{
   if(!entered || $('review-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
   if(/^[1-9]$/.test(event.key)){
-    const entry=availableDialogues(visited)[Number(event.key)-1];if(entry){event.preventDefault();choose(entry);}
+    const entry=journey.choices[Number(event.key)-1];if(entry){event.preventDefault();choose(entry);}
   }else if(event.key==='Escape'){narrator.stop();showText(current.text);}
 });
 document.addEventListener('visibilitychange',()=>{

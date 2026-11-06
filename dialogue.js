@@ -181,3 +181,54 @@ export function availableDialogues(visited) {
   return order.map(id => dialogues.find(entry => entry.id === id))
     .filter(entry => (entry.requires || []).every(id => visited.has(id)));
 }
+
+// Keep the opening menu small, then offer only questions related to this answer.
+const followUps = {
+  opening: ['garden', 'test', 'upright', 'others', 'evil', 'identity'],
+  garden: ['test', 'upright', 'paradise'],
+  test: ['death', 'others'],
+  upright: ['human', 'hands'],
+  others: ['test', 'death'],
+  evil: ['darkness', 'hate', 'enjoy', 'light'],
+  identity: ['age', 'lied', 'evil'],
+  hands: ['purpose'],
+  human: ['hands'],
+  purpose: ['work'],
+  work: ['free'],
+  free: ['hurry', 'upright'],
+  death: ['burial', 'others'],
+  burial: ['remember'],
+  remember: ['identity', 'age'],
+  age: ['hurry', 'hate'],
+  hurry: ['upright', 'work'],
+  hate: ['darkness', 'age'],
+  darkness: ['abandoned', 'light'],
+  abandoned: ['identity', 'memory'],
+  lied: ['believe'],
+  believe: ['identity'],
+  paradise: ['return'],
+  return: ['garden'],
+  enjoy: ['age', 'hate'],
+  light: ['darkness', 'memory'],
+  memory: ['darkness', 'abandoned']
+};
+
+export function relatedDialogues(currentId, visited) {
+  const unlocked = new Map(availableDialogues(visited).map(entry => [entry.id, entry]));
+  return (followUps[currentId] || []).map(id => unlocked.get(id)).filter(Boolean);
+}
+
+export class DialogueJourney {
+  constructor() { this.trail = ['opening']; this.visited = new Set(); }
+  get current() {
+    return dialogues.find(entry => entry.id === this.trail.at(-1)) || { id: 'opening', text: opening };
+  }
+  get choices() { return relatedDialogues(this.current.id, this.visited); }
+  get canGoBack() { return this.trail.length > 1; }
+  choose(id) {
+    if (!this.choices.some(entry => entry.id === id)) return false;
+    this.visited.add(id); this.trail.push(id); return true;
+  }
+  back() { if (this.canGoBack) this.trail.pop(); }
+  firstQuestions() { this.trail = ['opening']; }
+}

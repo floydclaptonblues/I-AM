@@ -16,3 +16,5 @@ dialog{width:min(760px,calc(100% - 30px));max-height:85svh;color:var(--green);ba
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important;transition:none!important}.portrait{transform:none!important}}
 
 .portrait{height:auto;aspect-ratio:1;position:absolute;left:0;top:-7px;}
+
+.question-navigation{display:flex;flex-wrap:wrap;gap:8px 20px;margin:8px 7px 0;padding-top:9px;border-top:1px solid #3b492b}.question-navigation button{width:auto;min-height:40px;font-size:12px;letter-spacing:.06em;color:#a2b285;padding:8px 4px}.question-navigation button:last-child{margin-left:auto}
