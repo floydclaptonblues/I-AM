@@ -16,7 +16,9 @@ The local server uses http://127.0.0.1:4173. GitHub Pages serves `main` from `/(
 
 ## Interaction
 
-- Enter starts the opening line from a user gesture. No automatic audio before entry.
+- Enter starts the opening line from a user gesture. No automatic audio before entry. Returning visitors see Continue; their last answer is restored silently, ready for Replay or the next question.
+- Progress is saved after each choice or navigation action in this browser’s local storage, including the Back trail, unlocks, Review transcript, and sound/motion preferences. It does not sync between devices. Cleared browser data/private-session expiry removes the save. Missing, invalid, or unavailable storage never blocks the conversation.
+- Start Over is available on the returning entry screen and in the console. Its confirmation offers Keep My Place; confirming resets the saved conversation and transcript while retaining sound/motion preferences. First Questions still preserves progress.
 - Six numbered questions are initially available, with 26 exchanges in total. Follow-up questions unfold through the conversation: uprightness leads to hands, purpose, work, and freedom; the test leads to death, burial, and memory; identity leads to age, hurry, lies, and belief; the garden leads to paradise and return; evil leads to light, darkness, abandonment, resentment, and enjoyment.
 - After each answer, only its related follow-ups appear (at most four). BACK restores the previous answer and question group; FIRST QUESTIONS returns to the six opening questions. These controls stop narration without replaying it or adding duplicate transcript entries. Unlocked knowledge and the Review transcript are preserved.
 - Select questions with mouse/touch, Tab + Enter, or number keys for the current visible group. Focus moves into each new group and returns to the previous choice when going back. Escape stops narration outside the Review dialog.
@@ -41,6 +43,7 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 - `styles.css`: metal finish, responsive layout, green/amber typography, restrained CRT effects
 - `app.js`: encounter state, transcripts, question selection, captions, sound/motion controls
 - `dialogue.js`: original answers, additional dialogue, unlock requirements
+- `session.js`: versioned browser-local persistence with validation and graceful storage failures
 - `speech.js`: speech synthesis lifecycle and cancellation guards
 - `portrait.js`: discrete mouth states and independent blinking
 - `assets/`: original garden GIF, extracted still, portrait sheet, texture, favicon, provenance
@@ -50,6 +53,6 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 
 ## Validation and recovery
 
-`npm test` covers 19 cases including rapid switching, cancellation, failed speech, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
+`npm test` covers 26 cases including rapid switching, cancellation, failed speech, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
 
 The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.

@@ -1,15 +1,17 @@
-import { opening, DialogueJourney } from './dialogue.js?v=related-choices-1';
+import { opening, DialogueJourney } from './dialogue.js?v=remember-1';
+import { loadSession, saveSession } from './session.js?v=remember-1';
 import { Narrator } from './speech.js';
 import { Portrait } from './portrait.js';
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const synth = window.speechSynthesis;
-const journey = new DialogueJourney();
-let muted = false, still = reduced.matches, entered = false;
+const saved = loadSession();
+const journey = saved?.journey || new DialogueJourney();
+let resuming = journey.history.length > 0;
+let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches, entered = false;
 let current = journey.current;
 let background = { still: 'assets/garden-still.webp', animated: null };
 let sentence = opening;
-const history = [{ text: opening }];
 const portrait = new Portrait({ setFrame: state => { $('portrait').dataset.mouth = state; } });
 const stateLabels = { idle: 'Listening.', loading: 'Waiting for voice.', speaking: 'Speaking.', between: 'Speaking.', finished: 'Listening.', paused: 'Paused.', unavailable: 'Voice unavailable. The complete response is available in the dialogue panel and Review.' };
 function showText(text) { $('caption').textContent = text; $('response-scroll').scrollTop = 0; }
@@ -43,10 +45,13 @@ function choose(entry) {
   if (!journey.choose(entry.id)) return;
   narrator.stop();
   current = journey.current;
-  history.push({ question:entry.label, text:entry.text });
   showText(entry.text);
   renderChoices({ focus: true });
   play();
+  remember();
+}
+function remember() {
+  if (!saveSession(journey, { muted, still })) $('status').textContent = 'This browser could not save your place. You can continue this visit.';
 }
 function renderChoices({ focus = false, focusId = null } = {}) {
   const fragment = document.createDocumentFragment();
@@ -75,6 +80,7 @@ function returnToQuestions(first = false) {
   showText(current.text);
   renderChoices({ focus: true, focusId });
   $('status').textContent = first ? 'Opening questions.' : 'Earlier questions.';
+  remember();
 }
 $('back-questions').addEventListener('click', () => returnToQuestions());
 $('first-questions').addEventListener('click', () => returnToQuestions(true));
@@ -83,17 +89,23 @@ $('enter').addEventListener('click', () => {
   entered=true; $('threshold').hidden=true; $('encounter').hidden=false; $('encounter').inert=false;
   portrait.start(); updateMotion();
   $('question-list').querySelector('button')?.focus({preventScroll:true});
-  play();
+  if (resuming) { showText(current.text); $('status').textContent='Your place is remembered. Select Replay to hear the response.'; }
+  else play();
+  remember();
 });
 $('listen').addEventListener('click', () => play());
 $('stop').addEventListener('click', () => { narrator.stop(); showText(current.text); });
 $('mute').addEventListener('click', () => {
   muted=!muted; narrator.stop(); showText(current.text);
+  updateSound();
+  $('status').textContent=muted?'Sound off.':'Sound on. Select Replay to hear the response.';
+  remember();
+});
+function updateSound() {
   $('mute').setAttribute('aria-pressed',String(muted)); $('mute').setAttribute('aria-label',muted?'Unmute voice':'Mute voice');
   $('mute').querySelector('span').textContent=muted?'SOUND OFF':'SOUND ON';
   $('listen').disabled=muted;
-  $('status').textContent=muted?'Sound off.':'Sound on. Select Replay to hear the response.';
-});
+}
 function updateMotion() {
   const frozen = still || reduced.matches;
   document.body.classList.toggle('still',frozen);
@@ -104,7 +116,7 @@ function updateMotion() {
   $('motion').disabled=reduced.matches;
   $('garden-image').src=entered && !frozen && background.animated ? background.animated : background.still;
 }
-$('motion').addEventListener('click',()=>{still=!still;updateMotion();});
+$('motion').addEventListener('click',()=>{still=!still;updateMotion();remember();});
 reduced.addEventListener('change',()=>{still=reduced.matches;updateMotion();});
 $('garden-image').addEventListener('error',()=>{
   if (!$('garden-image').src.endsWith('/assets/garden-still.svg')) $('garden-image').src='assets/garden-still.svg';
@@ -113,7 +125,7 @@ fetch('assets/background.json').then(r=>{if(!r.ok)throw new Error('Background co
 function review() {
   narrator.stop(); showText(current.text);
   $('history').replaceChildren();
-  for(const item of history){
+  for(const item of journey.transcript){
     const article=document.createElement('article');
     if(item.question){const heading=document.createElement('h3');heading.textContent=item.question;article.append(heading);}
     const text=document.createElement('p');text.textContent=item.text;article.append(text);$('history').append(article);
@@ -122,8 +134,25 @@ function review() {
 }
 $('review').addEventListener('click',review);
 $('close-review').addEventListener('click',()=>$('review-dialog').close());
+function askToRestart() {
+  narrator.stop(); showText(current.text);
+  $('restart-dialog').showModal(); $('cancel-restart').focus();
+}
+$('restart').addEventListener('click', askToRestart);
+$('restart-entry').addEventListener('click', askToRestart);
+$('cancel-restart').addEventListener('click', () => $('restart-dialog').close());
+$('confirm-restart').addEventListener('click', () => {
+  narrator.stop(); journey.reset(); current=journey.current; resuming=false;
+  $('history').replaceChildren();
+  $('restart-dialog').close();
+  $('enter').textContent='[ ENTER ]'; $('restart-entry').hidden=true;
+  showText(current.text); renderChoices({ focus: entered });
+  if (!entered) $('enter').focus();
+  $('status').textContent='The conversation has begun again.';
+  remember();
+});
 document.addEventListener('keydown',event=>{
-  if(!entered || $('review-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
+  if(!entered || $('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
   if(/^[1-9]$/.test(event.key)){
     const entry=journey.choices[Number(event.key)-1];if(entry){event.preventDefault();choose(entry);}
   }else if(event.key==='Escape'){narrator.stop();showText(current.text);}
@@ -134,4 +163,5 @@ document.addEventListener('visibilitychange',()=>{
 });
 window.addEventListener('pagehide',()=>{narrator.stop();portrait.suspend();});
 window.addEventListener('pageshow',event=>{if(event.persisted&&entered){portrait.start();updateMotion();}});
-renderChoices();updateMotion();
+if (resuming) { $('enter').textContent='[ CONTINUE ]'; $('restart-entry').hidden=false; }
+showText(current.text);renderChoices();updateSound();updateMotion();

@@ -219,7 +219,30 @@ export function relatedDialogues(currentId, visited) {
 }
 
 export class DialogueJourney {
-  constructor() { this.trail = ['opening']; this.visited = new Set(); }
+  constructor() { this.reset(); }
+  reset() { this.trail = ['opening']; this.visited = new Set(); this.history = []; }
+  snapshot() { return { trail: [...this.trail], history: [...this.history] }; }
+  restore(saved) {
+    if (!saved || !Array.isArray(saved.trail) || !Array.isArray(saved.history) || saved.trail[0] !== 'opening') return false;
+    const visited = new Set();
+    for (const id of saved.history) {
+      const entry = dialogues.find(item => item.id === id);
+      if (!entry || !(entry.requires || []).every(required => visited.has(required))) return false;
+      visited.add(id);
+    }
+    for (let index = 1; index < saved.trail.length; index++) {
+      const id = saved.trail[index];
+      if (!visited.has(id) || !relatedDialogues(saved.trail[index - 1], visited).some(entry => entry.id === id)) return false;
+    }
+    this.trail = [...saved.trail]; this.history = [...saved.history]; this.visited = visited;
+    return true;
+  }
+  get transcript() {
+    return [{ text: opening }, ...this.history.map(id => {
+      const entry = dialogues.find(item => item.id === id);
+      return { question: entry.label, text: entry.text };
+    })];
+  }
   get current() {
     return dialogues.find(entry => entry.id === this.trail.at(-1)) || { id: 'opening', text: opening };
   }
@@ -227,7 +250,7 @@ export class DialogueJourney {
   get canGoBack() { return this.trail.length > 1; }
   choose(id) {
     if (!this.choices.some(entry => entry.id === id)) return false;
-    this.visited.add(id); this.trail.push(id); return true;
+    this.visited.add(id); this.trail.push(id); this.history.push(id); return true;
   }
   back() { if (this.canGoBack) this.trail.pop(); }
   firstQuestions() { this.trail = ['opening']; }

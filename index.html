@@ -4,11 +4,11 @@
 <meta name="theme-color" content="#11130e"><meta name="description" content="I was always here.">
 <title>I AM</title><link rel="icon" href="assets/mark.svg" type="image/svg+xml">
 <link rel="preload" as="image" href="assets/serpent-states.webp">
-<link rel="stylesheet" href="styles.css?v=related-choices-1"><script type="module" src="app.js?v=related-choices-1"></script>
+<link rel="stylesheet" href="styles.css?v=remember-1"><script type="module" src="app.js?v=remember-1"></script>
 </head><body>
 <div class="garden" aria-hidden="true"><img id="garden-image" src="assets/garden-still.webp" alt=""></div>
 <div class="garden-shade" aria-hidden="true"></div>
-<section id="threshold" class="threshold" aria-label="Enter the garden"><h1>I AM</h1><button id="enter" type="button">[ ENTER ]</button><noscript><p>I was always here.</p><p>JavaScript is required to enter.</p></noscript></section>
+<section id="threshold" class="threshold" aria-label="Enter the garden"><h1>I AM</h1><button id="enter" type="button">[ ENTER ]</button><button id="restart-entry" type="button" hidden aria-controls="restart-dialog">START OVER</button><noscript><p>I was always here.</p><p>JavaScript is required to enter.</p></noscript></section>
 <main id="encounter" class="console" aria-label="Conversation with the serpent" hidden inert>
 <a class="skip" href="#questions">Skip to questions</a>
 <header class="console-top"><span class="engraved">I AM</span><span class="serial" aria-hidden="true">E D E N &nbsp; — &nbsp; 0 0 0</span><i class="screw" aria-hidden="true"></i></header>
@@ -25,9 +25,11 @@
 <button id="stop" type="button" disabled aria-label="Stop narration">SILENCE</button>
 <button id="motion" type="button" aria-pressed="false" aria-label="Pause all motion">STILL</button>
 <button id="review" type="button" aria-controls="review-dialog">REVIEW</button>
+<button id="restart" type="button" aria-controls="restart-dialog">START OVER</button>
 </div>
 <nav id="questions" class="choices-frame" aria-label="Questions for the serpent"><ol id="question-list"></ol><div id="question-navigation" class="question-navigation" hidden><button id="back-questions" type="button" aria-label="Go back to the previous questions">← BACK</button><button id="first-questions" type="button" aria-label="Return to the opening questions">FIRST QUESTIONS</button></div></nav>
 <footer class="console-bottom"><i class="screw" aria-hidden="true"></i><div class="bottom-grille" aria-hidden="true"></div><span class="engraved" aria-hidden="true">I AM</span><i class="screw" aria-hidden="true"></i></footer>
 </section><p id="status" class="sr-only" role="status" aria-live="polite"></p></main>
 <dialog id="review-dialog" aria-labelledby="review-title"><header><h2 id="review-title">REVIEW</h2><button id="close-review" type="button" aria-label="Close conversation review">CLOSE</button></header><div id="history"></div></dialog>
+<dialog id="restart-dialog" aria-labelledby="restart-title" aria-describedby="restart-description"><header><h2 id="restart-title">BEGIN AGAIN?</h2></header><p id="restart-description">Your place and conversation history will be forgotten. Sound and motion settings will remain.</p><div class="restart-actions"><button id="cancel-restart" type="button" autofocus>KEEP MY PLACE</button><button id="confirm-restart" type="button">START OVER</button></div></dialog>
 </body></html>
