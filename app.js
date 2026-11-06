@@ -152,7 +152,7 @@ $('confirm-restart').addEventListener('click', () => {
   $('history').replaceChildren();
   $('restart-dialog').close();
   showText(current.text); renderChoices({ focus: true });
-  $('status').textContent='The conversation has begun again.';
+  play();
   remember();
 });
 document.addEventListener('keydown',event=>{
