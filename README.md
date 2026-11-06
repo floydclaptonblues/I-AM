@@ -63,3 +63,5 @@ Browser speech synthesis chooses available English voices, preferring David, Dan
 The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.
 
 The current backdrop is the original Eden GIF, displayed at 118% brightness without a tint, shadow overlay, or vignette. Still and reduced-motion modes use its first frame with the same brightness. The console and controls retain the charcoal, warm ivory and muted gold palette and their existing layout. The night photograph remains archived and is no longer selected by the application.
+
+The console shell uses a 75%-opaque charcoal surface so the Eden GIF can show through. Dialogue and question panels keep their 93%-opaque dark backing; text, controls and the portrait retain full opacity.
