@@ -48,6 +48,7 @@ async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,m
     }
   },{conversation:savedJourney(route),muted,mock,nativeFallback});
   const page=await context.newPage();
+  page.setDefaultTimeout(15000);
   const errors=[]; page.on('pageerror',error=>errors.push(error.message));
   t.after(()=>assert.deepEqual(errors,[],'No uncaught browser errors'));
   await page.goto(base,{waitUntil:'networkidle'});
@@ -192,7 +193,11 @@ test('a visitor who tabs away during the pause is not pulled back by the reveal'
 
 test('browsers without ImageDecoder pause the same garden video frame and resume it',async t=>{
   const page=await open(t,{route:finaleRoute,nativeFallback:true});
-  await page.waitForFunction(()=>document.getElementById('garden-video').currentTime>0.1);
+  try { await page.waitForFunction(()=>document.getElementById('garden-video').currentTime>0.1); }
+  catch(error) {
+    const video=await page.locator('#garden-video').evaluate(el=>({src:el.currentSrc,paused:el.paused,readyState:el.readyState,error:el.error?.message}));
+    throw new Error(JSON.stringify(video),{cause:error});
+  }
   await choose(page,'you-darkness');
   const frame=await page.locator('#garden-video').evaluate(el=>({paused:el.paused,time:el.currentTime,hidden:el.hidden}));
   assert.equal(frame.paused,true); assert.equal(frame.hidden,false);

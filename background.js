@@ -19,7 +19,8 @@ export class GardenPlayer {
     } catch {
       this.decoder?.close(); this.decoder = null;
       if (this.video) {
-        this.video.src = 'assets/eden-figs.mp4';
+        this.video.src = this.video.canPlayType('video/webm; codecs="vp9"')
+          ? 'assets/eden-figs.webm' : 'assets/eden-figs.mp4';
         this.video.preload = 'auto';
         this.video.muted = true;
         this.video.addEventListener('loadeddata', () => {
