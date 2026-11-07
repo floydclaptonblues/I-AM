@@ -20,7 +20,7 @@ const stateLabels = { idle: 'Listening.', loading: 'Waiting for voice.', speakin
 function showText(text) { answer.set(text); }
 function focusAnswer() {
   $('caption').focus({ preventScroll: true });
-  if (!heldResponse?.active) $('caption').scrollIntoView({ block: 'nearest', behavior: 'instant' });
+  if (!heldResponse?.active) $('caption').scrollIntoView({ block: 'start', behavior: 'instant' });
 }
 const narrator = new Narrator({
   synth, Utterance: window.SpeechSynthesisUtterance,

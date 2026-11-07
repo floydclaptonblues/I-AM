@@ -87,6 +87,8 @@ test('keyboard focus receives one complete answer; speech never replaces or rear
   assert.equal(await page.locator('#answer-accessible').textContent(),text);
   assert.equal(await page.locator('#answer-visual').textContent(),text);
   assert.equal(await page.evaluate(()=>document.activeElement.id),'caption');
+  const readingPosition=await page.evaluate(()=>({answer:document.getElementById('caption').getBoundingClientRect().top,face:document.querySelector('.portrait-screen').getBoundingClientRect().bottom}));
+  assert.ok(readingPosition.answer>=readingPosition.face,JSON.stringify(readingPosition));
   assert.equal(await page.locator('#caption').getAttribute('aria-describedby'),'answer-accessible');
   assert.equal(await page.locator('#answer-visual').getAttribute('aria-hidden'),'true');
   assert.equal(await page.locator('#question-list [aria-pressed]').count(),0);
