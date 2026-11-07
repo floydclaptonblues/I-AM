@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { dialogues, DialogueJourney } from '../../dialogue.js';
+import { dialogues, DialogueJourney, opening } from '../../dialogue.js';
 
 const require = createRequire(import.meta.url);
 const base = process.env.BASE_URL || 'http://127.0.0.1:4173/';
@@ -160,13 +160,13 @@ test('Stop, Back and restart clean up an interrupted finale without stale reveal
       await page.locator('.utilities summary').click();await page.locator('#restart').click();
       assert.equal(await page.locator('body.held-gaze').count(),0);
       await page.locator('#confirm-restart').click();
-      assert.equal(await page.locator('#answer-accessible').textContent(),'I was always here.');
+      assert.equal(await page.locator('#answer-accessible').textContent(),opening);
     } else await page.locator('#stop').click();
     assert.equal(await page.locator('body.held-gaze').count(),0);
     assert.equal(await page.locator('#question-list').isVisible(),true);
   }
   await page.waitForTimeout(3300);
-  assert.equal(await page.locator('#answer-accessible').textContent(),'I was always here.');
+  assert.equal(await page.locator('#answer-accessible').textContent(),opening);
 });
 
 test('quiet spoken finale keeps mouth closed; failure and reduced motion release all temporary state',async t=>{
