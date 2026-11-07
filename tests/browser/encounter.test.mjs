@@ -59,7 +59,7 @@ async function audit(page,name) {
   await page.addScriptTag({path:require.resolve('axe-core/axe.min.js')});
   const report=await page.evaluate(async()=>axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21aa','wcag22aa']}}));
   await writeFile(results+'/'+name+'-axe.json',JSON.stringify(report,null,2));
-  assert.deepEqual(report.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>n.target)})),[]);
+  assert.deepEqual(report.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})),[]);
 }
 
 for(const [width,height] of [[320,568],[375,667],[390,844],[768,1024],[1366,768],[1920,1080]]) {
@@ -229,5 +229,11 @@ test('visitors can change subjects without losing the answer or conversation', a
   await page.getByRole('button',{name:'Go back to the previous questions',exact:true}).click();
   assert.equal(await page.locator('#answer-accessible').textContent(),previous);
   assert.equal(await page.locator('[data-question="death"]').count(),1);
+  const focusBounds=await page.evaluate(()=>({
+    question:document.activeElement.getBoundingClientRect().top,
+    portrait:document.querySelector('.upper-deck').getBoundingClientRect().bottom
+  }));
+  assert.ok(focusBounds.question>=focusBounds.portrait,JSON.stringify(focusBounds));
+  await page.screenshot({path:results+'/change-subject-320.png',fullPage:true});
   await audit(page,'change-subject');
 });

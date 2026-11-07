@@ -99,6 +99,7 @@ function renderChoices({ focus = false, focusId = null } = {}) {
     const target = (focusId && $('question-list').querySelector('[data-question="'+focusId+'"]'))
       || $('question-list').querySelector('button') || $('back-questions');
     target.focus({ preventScroll: true });
+    target.scrollIntoView({ block: 'center', behavior: 'instant' });
   }
 }
 function returnToQuestions(first = false) {
