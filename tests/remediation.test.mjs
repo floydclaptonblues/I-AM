@@ -37,6 +37,7 @@ test('both light and darkness enter cosmic origins without visiting identity', (
 test('alternate entrance does not remove age from the final identity gate', () => {
   const seen = new Set(dialogues.map(d=>d.id)); seen.delete('age');
   assert.ok(!availableDialogues(seen).some(d=>d.id==='certain-light'));
+  assert.ok(relatedDialogues('happy',seen).some(d=>d.id==='identity'));
 });
 
 test('paired-claim challenge and second entrance survive a real saved journey', () => {

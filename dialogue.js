@@ -450,6 +450,9 @@ const followUps = {
 export function relatedDialogues(currentId, visited) {
   const unlocked = new Map(availableDialogues(visited).map(entry => [entry.id, entry]));
   const related = (followUps[currentId] || []).map(id => unlocked.get(id)).filter(Boolean);
+  // The alternate origin route still needs the original age discovery before the
+  // final identity challenge. Give that visitor an organic way to ask who speaks.
+  if (currentId === 'happy' && !visited.has('age')) related.push(unlocked.get('identity'));
   return [...related, ...contradictions.filter(entry => entry.contexts.includes(currentId) && unlocked.has(entry.id))];
 }
 

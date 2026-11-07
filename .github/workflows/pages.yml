@@ -41,6 +41,7 @@ jobs:
           mkdir -p _site
           cp index.html styles.css .nojekyll ./*.js _site/
           cp -R assets _site/assets
+          node scripts/stamp-build.mjs
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
