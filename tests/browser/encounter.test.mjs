@@ -109,7 +109,7 @@ test('keyboard focus receives one complete answer; speech never replaces or rear
 });
 
 test('speech failure retains the complete answer and releases controls',async t=>{
-  const page=await open(t,{muted:false});await choose(page,'test');
+  const page=await open(t,{muted:false});await choose(page,'garden');await choose(page,'test');
   await page.evaluate(()=>testUtterances.at(-1).onerror({error:'not-allowed'}));
   assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='test').text);
   assert.equal(await page.locator('#stop').isDisabled(),true);
