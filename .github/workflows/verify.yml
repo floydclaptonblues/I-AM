@@ -1,7 +1,7 @@
 name: Verify the encounter
 on:
   push:
-    branches: ['codex/immersion-remediation']
+    branches: ['codex/**']
   workflow_dispatch:
 permissions:
   contents: read
