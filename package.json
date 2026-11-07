@@ -7,7 +7,7 @@
     "start": "node scripts/serve.mjs",
     "test": "node --test tests/*.test.mjs",
     "test:browser": "node --test --test-concurrency=1 tests/browser/*.test.mjs",
-    "check": "node --check app.js && node --check speech.js && node --check portrait.js && node --check dialogue.js && node --check session.js && node --check response.js && node --check answer.js && node --check background.js && node --check scripts/serve.mjs"
+    "check": "node --check app.js && node --check speech.js && node --check portrait.js && node --check dialogue.js && node --check session.js && node --check response.js && node --check answer.js && node --check background.js && node --check scripts/serve.mjs && node --check scripts/stamp-build.mjs && node --check scripts/prepare-background.mjs"
   }
 }
 

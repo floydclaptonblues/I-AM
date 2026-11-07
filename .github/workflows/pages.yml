@@ -30,6 +30,8 @@ jobs:
         run: |
           npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 axe-core@4.11.0
           npx playwright install --with-deps chromium
+          sudo apt-get install -y ffmpeg
+          node scripts/prepare-background.mjs
           npm run test:browser
       - uses: actions/upload-artifact@v4
         if: always()

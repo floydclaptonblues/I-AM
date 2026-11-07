@@ -35,17 +35,18 @@ function savedJourney(route=[]) {
 }
 const finaleRoute=['identity','age','before-humans','why-wait','before-light','father-brighter','god-knows','believe-father','want-god','fill-darkness','darkness-end','nothing-darkness','darkness-ended','called-back','happy','certain-light'];
 const choose = (page,id) => page.locator('[data-question="'+id+'"]').click();
-async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,mock=true}={}) {
+async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,mock=true,nativeFallback=false}={}) {
   const context = await browser.newContext({ viewport:{width,height}, reducedMotion:reduced?'reduce':'no-preference' });
   t.after(()=>context.close());
-  await context.addInitScript(({conversation,muted,mock})=>{
+  await context.addInitScript(({conversation,muted,mock,nativeFallback})=>{
+    if(nativeFallback) Object.defineProperty(window,'ImageDecoder',{value:undefined,configurable:true});
     if(!localStorage.getItem('i-am.garden.session')) localStorage.setItem('i-am.garden.session',JSON.stringify({version:1,conversation,muted,still:false}));
     if(mock) {
       window.testUtterances=[]; window.testCancels=0;
       Object.defineProperty(window,'SpeechSynthesisUtterance',{value:class { constructor(text){this.text=text;} },configurable:true});
       Object.defineProperty(window,'speechSynthesis',{value:{paused:false,getVoices:()=>[],cancel(){window.testCancels++;},speak(u){window.testUtterances.push(u);},resume(){}},configurable:true});
     }
-  },{conversation:savedJourney(route),muted,mock});
+  },{conversation:savedJourney(route),muted,mock,nativeFallback});
   const page=await context.newPage();
   const errors=[]; page.on('pageerror',error=>errors.push(error.message));
   t.after(()=>assert.deepEqual(errors,[],'No uncaught browser errors'));
@@ -185,4 +186,16 @@ test('a visitor who tabs away during the pause is not pulled back by the reveal'
   await page.waitForFunction(()=>document.getElementById('answer-accessible').textContent==='Who told you to ask me that?');
   assert.equal(await page.evaluate(()=>document.activeElement.id),'listen');
   assert.equal(await page.locator('#status').textContent(),'Who told you to ask me that?');
+});
+
+test('browsers without ImageDecoder pause the same garden video frame and resume it',async t=>{
+  const page=await open(t,{route:finaleRoute,nativeFallback:true});
+  await page.waitForFunction(()=>document.getElementById('garden-video').currentTime>0.1);
+  await choose(page,'you-darkness');
+  const frame=await page.locator('#garden-video').evaluate(el=>({paused:el.paused,time:el.currentTime,hidden:el.hidden}));
+  assert.equal(frame.paused,true); assert.equal(frame.hidden,false);
+  await page.waitForTimeout(600);
+  assert.equal(await page.locator('#garden-video').evaluate(el=>el.currentTime),frame.time);
+  await page.locator('#stop').click();
+  await page.waitForFunction(time=>document.getElementById('garden-video').currentTime>time,frame.time);
 });

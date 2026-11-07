@@ -663,7 +663,7 @@ dialog header,dialog article {
   border-bottom-color: #53483b;
 }
 
-.garden img,.garden canvas {
+.garden img,.garden canvas,.garden video {
   width: 100%;
   height: 100%;
   object-fit: cover;

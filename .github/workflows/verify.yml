@@ -17,6 +17,10 @@ jobs:
       - name: Install browser test tools
         run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 axe-core@4.11.0
       - run: npx playwright install --with-deps chromium
+      - name: Prepare pauseable garden fallback
+        run: |
+          sudo apt-get install -y ffmpeg
+          node scripts/prepare-background.mjs
       - run: npm run test:browser
       - uses: actions/upload-artifact@v4
         if: always()

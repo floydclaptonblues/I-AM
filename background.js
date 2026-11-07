@@ -1,8 +1,8 @@
 // Decode the supplied GIF without changing its artwork. Holding the canvas stops on
 // the exact displayed frame; CSS animation-play-state cannot pause an <img> GIF.
 export class GardenPlayer {
-  constructor({ image, canvas, Decoder = globalThis.ImageDecoder }) {
-    Object.assign(this, { image, canvas, Decoder });
+  constructor({ image, canvas, video, Decoder = globalThis.ImageDecoder }) {
+    Object.assign(this, { image, canvas, video, Decoder });
     this.frozen = true; this.frame = 0; this.timer = null; this.generation = 0;
   }
   async load(config) {
@@ -18,7 +18,21 @@ export class GardenPlayer {
       if (!this.frozen) this.schedule();
     } catch {
       this.decoder?.close(); this.decoder = null;
-      this.image.src = this.frozen ? config.still : config.animated || config.still;
+      if (this.video) {
+        this.video.src = 'assets/eden-figs.mp4';
+        this.video.preload = 'auto';
+        this.video.muted = true;
+        this.video.addEventListener('loadeddata', () => {
+          this.videoReady = true; this.video.hidden = false;
+          this.image.hidden = true; this.canvas.hidden = true;
+          this.freeze(this.frozen);
+        }, { once: true });
+        this.video.addEventListener('error', () => {
+          this.videoReady = false; this.video.hidden = true;
+          this.image.hidden = false; this.image.src = config.still;
+        }, { once: true });
+        this.video.load();
+      }
     }
   }
   async draw(index, generation) {
@@ -44,19 +58,15 @@ export class GardenPlayer {
     }, this.duration || 100);
   }
   freeze(value) {
+    if (this.videoReady) {
+      this.frozen = value;
+      if (value) this.video.pause();
+      else this.video.play().catch(() => {}); // Autoplay policy may leave a still frame.
+      return;
+    }
     if (value === this.frozen) return;
     this.frozen = value; this.generation++; clearTimeout(this.timer);
     if (this.decoder) { if (!value) this.schedule(); return; }
-    if (!this.config) return;
-    if (value && this.image.complete && this.image.naturalWidth) {
-      // Native-GIF fallback: capture the browser's drawable frame, then hide the
-      // animated image. Exact frame retention uses ImageDecoder above.
-      this.canvas.width = this.image.naturalWidth; this.canvas.height = this.image.naturalHeight;
-      this.canvas.getContext('2d').drawImage(this.image, 0, 0);
-      this.canvas.hidden = false; this.image.hidden = true;
-    } else {
-      this.canvas.hidden = true; this.image.hidden = false;
-      this.image.src = value ? this.config.still : this.config.animated || this.config.still;
-    }
+    // Until a controllable renderer is ready, retain the matching poster frame.
   }
 }

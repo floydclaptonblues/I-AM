@@ -12,7 +12,7 @@ const saved = loadSession();
 const journey = saved?.journey || new DialogueJourney();
 let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches;
 let current = journey.current;
-const garden = new GardenPlayer({ image: $('garden-image'), canvas: $('garden-canvas') });
+const garden = new GardenPlayer({ image: $('garden-image'), canvas: $('garden-canvas'), video: $('garden-video') });
 const answer = new AnswerView({ visual: $('answer-visual'), accessible: $('answer-accessible') });
 let greeting, heldResponse;
 const portrait = new Portrait({ setFrame: state => { $('portrait').dataset.mouth = state; } });
@@ -63,6 +63,7 @@ function play({ focus = false } = {}) {
   }
   showText(current.text);
   if (focus) focusAnswer();
+  updateMotion();
   if (muted) return;
   narrator.play(current.text);
 }
