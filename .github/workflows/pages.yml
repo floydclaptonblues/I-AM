@@ -24,6 +24,18 @@ jobs:
         run: |
           npm test
           npm run check
+      - name: Check browser interactions and accessibility
+        # The same browser checks run on the working branch before publication.
+        # Keep production gated on interaction, layout and accessibility checks.
+        run: |
+          npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 axe-core@4.11.0
+          npx playwright install --with-deps chromium
+          npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: encounter-production-review
+          path: test-results/
       - name: Package public site
         run: |
           mkdir -p _site
@@ -46,3 +58,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+

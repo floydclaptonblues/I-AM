@@ -22,11 +22,11 @@ test('plays complete monologues sentence by sentence and finishes silently', () 
   assert.equal(s.states.at(-1), 'finished'); assert.equal(s.timers.size, 0);
 });
 
-test('faster deeper speech leaves 1.4 seconds of silence before the next sentence', () => {
+test('ordinary transitions use the requested shorter pause while preserving voice settings', () => {
   const s = setup(); s.narrator.play('First. Second.');
   assert.equal(s.utterances[0].rate, 1.0); assert.equal(s.utterances[0].pitch, 0.4 * 2 ** (-2 / 12));
   s.utterances[0].onstart(); s.utterances[0].onend();
-  assert.deepEqual([...s.delays.values()], [1400]);
+  assert.deepEqual([...s.delays.values()], [300]);
   assert.deepEqual(s.sentences, ['First.']);
   assert.equal(s.narrator.current, null);
   s.advance(); assert.equal(s.utterances.length, 2);
@@ -123,9 +123,10 @@ test('every answer speaks all of its sentences to completion', () => {
   }
 });
 test('the three original themes and both expansions are present', () => {
-  assert.equal(dialogues.length, 48);
+  assert.equal(dialogues.length, 51);
   assert.match(dialogues[0].text, /ate what ate the food you desired/);
   assert.match(dialogues[1].text, /not out of respect/);
   assert.match(dialogues[2].text, /I am solipsism/);
   assert.match(dialogues[3].text, /higher figs/); assert.match(dialogues[4].text, /sent them back into it/);
 });
+

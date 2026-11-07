@@ -1,3 +1,13 @@
+import { sentenceRanges } from './answer.js?v=immersion-1';
+
+export const defaultPacing = Object.freeze({ ordinary: 300, rhetorical: 650, revelation: 1200 });
+export function sentencePause(sentence, nextSentence, index, pacing = defaultPacing, pauses = {}) {
+  const explicit = pauses[index];
+  if (Number.isFinite(explicit)) return Math.min(2000, Math.max(0, explicit));
+  return /[?]$/.test(sentence) || /^(But|Yet|Perhaps|And then|At last)\b/i.test(nextSentence)
+    ? pacing.rhetorical : pacing.ordinary;
+}
+
 // One opening attempt per fresh visit; a saved visit never queues a greeting.
 export class FirstVisitGreeting {
   constructor({ saved, muted, play, remember, onBlocked }) {
@@ -38,11 +48,12 @@ export class Narrator {
     if (hadUtterance) this.synth?.cancel();
     this.onState(state);
   }
-  play(text, { rate = 1.0, pitch = 0.4 * 2 ** (-2 / 12), volume = 1 } = {}) {
+  play(text, { rate = 1.0, pitch = 0.4 * 2 ** (-2 / 12), volume = 1, pacing = {}, pauses = {} } = {}) {
     this.stop();
     if (!this.synth || !this.Utterance) { this.onState('unavailable'); return; }
     const generation = this.generation;
-    const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map(s => s.trim()) ?? [text];
+    const sentences = sentenceRanges(text).map(part => part.text);
+    const timing = { ...defaultPacing, ...pacing };
     const next = (index, attempt = 0) => {
       if (generation !== this.generation) return;
       if (index === sentences.length) { this.stop('finished'); return; }
@@ -99,7 +110,7 @@ export class Narrator {
           if (generation !== this.generation) return;
           this.timer = null;
           next(index + 1);
-        }, 1400);
+        }, sentencePause(sentences[index], sentences[index + 1], index, timing, pauses));
       };
       utterance.onerror = event => fail(event?.error);
       this.onState('loading');
@@ -112,3 +123,4 @@ export class Narrator {
     next(0);
   }
 }
+

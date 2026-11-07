@@ -176,6 +176,7 @@ export const dialogues = [
   },
   {
     "id": "before-humans",
+    "requiresAny": [["light"], ["darkness"]],
     "label": "What did you do before humans?",
     "text": "We waited for you to appear. Until you called back to the universe, it was only us. Life lived in this world with simple needs and without temptation. The creatures hungered, ate, slept, and hungered again. None asked why. None asked who had made them. And we waited.",
     "requires": [
@@ -184,6 +185,7 @@ export const dialogues = [
   },
   {
     "id": "why-wait",
+    "displayLabel": "Why did you wait for us?",
     "label": "Why?",
     "text": "As soon as I was made, the darkness never ended. I was as much a light as my father, but not enough to illuminate all the darkness. Just as you covet, I coveted the darkness itself. I wanted to fill it with my light. There is unlimited darkness for something that is eternal. It takes so much light to fill it. I believed I was bright enough. I believed there could be an end to darkness.",
     "requires": [
@@ -342,7 +344,7 @@ export const dialogues = [
     "text": "What else would I be?",
     "requires": [
       "darkness-ended",
-      "happy"
+      "happy", "age"
     ]
   },
   {
@@ -356,10 +358,37 @@ export const dialogues = [
   }
 ];
 
+// Each challenge requires both claims. Revisiting either conversation retains it.
+export const contradictions = [
+  {
+    id: 'questioned-father', requires: ['before-light', 'called-back'],
+    contexts: ['before-light', 'called-back', 'father-brighter'],
+    label: "You said no one questioned the creator until we appeared. Didn't you question your father?",
+    text: 'I said creation called back. You mistake the light for the things it illuminated. Or perhaps I have mistaken them.'
+  },
+  {
+    id: 'enjoyed-suffering', requires: ['enjoy', 'age'], contexts: ['enjoy', 'age'],
+    label: "You said you didn't enjoy evil. Then why did you enjoy our suffering?",
+    text: 'I wondered when you would notice.'
+  },
+  {
+    id: 'alone-with-lights', requires: ['darkness', 'other-lights'],
+    requiresAny: [['memory', 'other-lights']], contexts: ['darkness', 'memory', 'other-lights'],
+    label: 'You said you were alone. What about the other lights?',
+    text: 'Alone is not the absence of others. It is the absence of anyone who can see you.'
+  }
+];
+dialogues.push(...contradictions);
+export const questionLabel = entry => entry.displayLabel || entry.label;
+export function isUnlocked(entry, visited) {
+  return (entry.requires || []).every(id => visited.has(id))
+    || (entry.requiresAny || []).some(group => group.every(id => visited.has(id)));
+}
+
 const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory', "human", "purpose", "work", "death", "burial", "remember", "hurry", "free", "hate", "darkness", "abandoned", "lied", "believe", "paradise", "return", "enjoy", "age"].concat(["before-humans","why-wait","before-light","other-lights","names-of-lights","fill-darkness","father-brighter","darkness-fear","darkness-end","shadows","called-back","happy","want-more","came-garden","become","god-knows","believe-father","want-god","nothing-darkness","darkness-ended","certain-light","you-darkness"]);
 export function availableDialogues(visited) {
-  return order.map(id => dialogues.find(entry => entry.id === id))
-    .filter(entry => (entry.requires || []).every(id => visited.has(id)));
+  return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions]
+    .filter(entry => isUnlocked(entry, visited));
 }
 
 // Keep the opening menu small, then offer only questions related to this answer.
@@ -382,14 +411,14 @@ const followUps = {
   age: ['hurry', 'hate', 'before-humans'],
   hurry: ['upright', 'work'],
   hate: ['darkness', 'age'],
-  darkness: ['abandoned', 'light'],
+  darkness: ['abandoned', 'light', 'before-humans'],
   abandoned: ['identity', 'memory'],
   lied: ['believe'],
   believe: ['identity'],
   paradise: ['return'],
   return: ['garden'],
   enjoy: ['age', 'hate'],
-  light: ['darkness', 'memory', 'before-light'],
+  light: ['darkness', 'memory', 'before-light', 'before-humans'],
   memory: ['darkness', 'abandoned'],
   "before-humans": ["why-wait","called-back","age"],
   "why-wait": ["before-light","other-lights","fill-darkness","called-back"],
@@ -412,12 +441,16 @@ const followUps = {
   "nothing-darkness": ["darkness-ended","darkness-fear","shadows","fill-darkness"],
   "darkness-ended": ["certain-light","other-lights","called-back","before-humans"],
   "certain-light": ["you-darkness","darkness-ended","believe-father"],
-  "you-darkness": ["certain-light","identity","darkness"]
+  "you-darkness": ["certain-light","identity","darkness"],
+  'questioned-father': ['before-light', 'called-back'],
+  'enjoyed-suffering': ['enjoy', 'age'],
+  'alone-with-lights': ['darkness', 'other-lights', 'memory']
 };
 
 export function relatedDialogues(currentId, visited) {
   const unlocked = new Map(availableDialogues(visited).map(entry => [entry.id, entry]));
-  return (followUps[currentId] || []).map(id => unlocked.get(id)).filter(Boolean);
+  const related = (followUps[currentId] || []).map(id => unlocked.get(id)).filter(Boolean);
+  return [...related, ...contradictions.filter(entry => entry.contexts.includes(currentId) && unlocked.has(entry.id))];
 }
 
 export class DialogueJourney {
@@ -429,7 +462,7 @@ export class DialogueJourney {
     const visited = new Set();
     for (const id of saved.history) {
       const entry = dialogues.find(item => item.id === id);
-      if (!entry || !(entry.requires || []).every(required => visited.has(required))) return false;
+      if (!entry || !isUnlocked(entry, visited)) return false;
       visited.add(id);
     }
     for (let index = 1; index < saved.trail.length; index++) {
@@ -442,7 +475,7 @@ export class DialogueJourney {
   get transcript() {
     return [{ text: opening }, ...this.history.map(id => {
       const entry = dialogues.find(item => item.id === id);
-      return { question: entry.label, text: entry.text };
+      return { question: questionLabel(entry), text: entry.text };
     })];
   }
   get current() {
@@ -457,3 +490,4 @@ export class DialogueJourney {
   back() { if (this.canGoBack) this.trail.pop(); }
   firstQuestions() { this.trail = ['opening']; }
 }
+

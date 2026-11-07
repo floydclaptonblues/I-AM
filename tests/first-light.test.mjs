@@ -17,7 +17,7 @@ function reachLastQuestion() {
 test('all 22 First Light questions and answers match the supplied text verbatim', () => {
   const supplied = JSON.parse(readFileSync(new URL('./first-light-dialogue.json', import.meta.url), 'utf8'));
   assert.equal(supplied.length, 22);
-  assert.deepEqual(dialogues.slice(26).map(({label,text}) => ({label,text})), supplied);
+  assert.deepEqual(dialogues.slice(26,48).map(({label,text}) => ({label,text})), supplied);
 });
 
 test('all 26 earlier exchanges and their prerequisites remain unchanged', () => {
@@ -92,3 +92,4 @@ test('old saved conversation trails still load after the expansion', () => {
   assert.equal(loaded.journey.history.length, 4);
   assert.equal(loaded.still, true);
 });
+

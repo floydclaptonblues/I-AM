@@ -1,0 +1,25 @@
+name: Verify the encounter
+on:
+  push:
+    branches: ['codex/immersion-remediation']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - run: npm test && npm run check
+      - name: Install browser test tools
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 axe-core@4.11.0
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: encounter-browser-review
+          path: test-results/

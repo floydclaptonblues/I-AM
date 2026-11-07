@@ -1,26 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dialogues, relatedDialogues, DialogueJourney } from '../dialogue.js';
+import { dialogues, contradictions, relatedDialogues, DialogueJourney, isUnlocked } from '../dialogue.js';
 
 test('choice groups stay bounded even after the whole conversation is unlocked', () => {
   const visited = new Set(dialogues.map(d => d.id));
   assert.equal(relatedDialogues('opening', visited).length, 6);
   for (const entry of dialogues) {
     const related = relatedDialogues(entry.id, visited);
-    assert.ok(related.length <= 4, entry.id + ' has too many choices');
+    const challenges = related.filter(item => contradictions.includes(item));
+    assert.ok(related.length - challenges.length <= 4, entry.id + ' has too many ordinary choices');
+    assert.ok(challenges.length <= 1, 'At most one paired-claim challenge is added to a context');
     assert.equal(new Set(related.map(d => d.id)).size, related.length);
     assert.ok(!related.some(d => d.id === entry.id));
   }
 });
 
-test('all 48 answers remain reachable through the actual related-choice graph', () => {
+test('all 51 answers remain reachable through the actual related-choice graph', () => {
   const visited = new Set();
   const contexts = new Set(['opening']);
   for (let pass = 0; pass <= dialogues.length; pass++) {
     const before = visited.size;
     for (const context of [...contexts]) {
       for (const entry of relatedDialogues(context, visited)) {
-        assert.ok((entry.requires || []).every(id => visited.has(id)));
+        assert.ok(isUnlocked(entry, visited));
         visited.add(entry.id); contexts.add(entry.id);
       }
     }
@@ -65,3 +67,4 @@ test('numbered selections follow the displayed group instead of the global unloc
   assert.equal(journey.choices[0].id, 'hurry');
   assert.equal(journey.choices[5], undefined);
 });
+
