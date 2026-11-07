@@ -1,4 +1,7 @@
-export const opening = 'I was always here.';
+export const opening = "What would you like to know? Since you already ate from the tree, I can tell you now and you'll understand.";
+
+// These questions make sense before the serpent has disclosed any of its story.
+export const openingQuestions = ['identity', 'garden', 'upright', 'evil', 'before-humans', 'age'];
 
 // Core garden/test/evil passages are unchanged from the original site's commit.
 export const dialogues = [
@@ -7,7 +10,7 @@ export const dialogues = [
     text: 'I was always here. I was in the tree, and you kept me around because I ate what ate the food you desired.'
   },
   {
-    id: 'test', label: 'What was the test?', fragment: 'II · THE FRUIT',
+    id: 'test', label: 'What was the test?', displayLabel: 'What happened when we reached for the fruit?', fragment: 'II · THE FRUIT',
     text: 'I tested your desire for the fruit. You reached into the canopy, and I bit you. Some became sick. Some died. Instead of avoiding the tree, you kept coming. The desire for the fruit overcame your fear. You did not know death until you saw your brothers fall from the canopy, again and again, and never move. You buried your brothers, not out of respect, but to hide the sight of death, so others would not know and would continue to reach into the tree.'
   },
   {
@@ -23,7 +26,7 @@ export const dialogues = [
     text: 'You freed your hands from the ground. Then you sent them back into it. To dig. To bury. To plant what would not grow without your suffering. The hands that reached for heaven learned the weight of soil. You wanted to be different from the animals. Tell me: when you bend over the earth until your back aches, what do you call the difference?'
   },
   {
-    id: 'others', label: 'What happened to the others?',
+    id: 'others', label: 'What happened to the others?', displayLabel: 'What happened to those who fell?',
     text: 'Some stopped reaching. Some stopped moving. You learned to tell the difference by waiting. Then you learned to cover the difference with earth. You ask about the others as though you were never one of them.'
   },
   {
@@ -344,7 +347,7 @@ export const dialogues = [
     "text": "What else would I be?",
     "requires": [
       "darkness-ended",
-      "happy", "age"
+      "happy", "age", "identity"
     ]
   },
   {
@@ -381,7 +384,8 @@ export const contradictions = [
 dialogues.push(...contradictions);
 export const questionLabel = entry => entry.displayLabel || entry.label;
 export function isUnlocked(entry, visited) {
-  return (entry.requires || []).every(id => visited.has(id))
+  return openingQuestions.includes(entry.id)
+    || (entry.requires || []).every(id => visited.has(id))
     || (entry.requiresAny || []).some(group => group.every(id => visited.has(id)));
 }
 
@@ -391,9 +395,10 @@ export function availableDialogues(visited) {
     .filter(entry => isUnlocked(entry, visited));
 }
 
-// Keep the opening menu small, then offer only questions related to this answer.
+// Immediate follow-ups respond to what was said. The visitor can also change
+// subjects through the same six self-contained opening questions at any time.
 const followUps = {
-  opening: ['garden', 'test', 'upright', 'others', 'evil', 'identity'],
+  opening: openingQuestions,
   garden: ['test', 'upright', 'paradise'],
   test: ['death', 'others'],
   upright: ['human', 'hands'],
@@ -408,7 +413,7 @@ const followUps = {
   death: ['burial', 'others'],
   burial: ['remember'],
   remember: ['identity', 'age'],
-  age: ['hurry', 'hate', 'before-humans'],
+  age: ['before-humans', 'hurry', 'hate'],
   hurry: ['upright', 'work'],
   hate: ['darkness', 'age'],
   darkness: ['abandoned', 'light', 'before-humans'],
@@ -458,8 +463,8 @@ export function relatedDialogues(currentId, visited) {
 
 export class DialogueJourney {
   constructor() { this.reset(); }
-  reset() { this.trail = ['opening']; this.visited = new Set(); this.history = []; }
-  snapshot() { return { trail: [...this.trail], history: [...this.history] }; }
+  reset() { this.trail = ['opening']; this.visited = new Set(); this.history = []; this.browsing = false; }
+  snapshot() { return { trail: [...this.trail], history: [...this.history], browsing: this.browsing }; }
   restore(saved) {
     if (!saved || !Array.isArray(saved.trail) || !Array.isArray(saved.history) || saved.trail[0] !== 'opening') return false;
     const visited = new Set();
@@ -470,9 +475,12 @@ export class DialogueJourney {
     }
     for (let index = 1; index < saved.trail.length; index++) {
       const id = saved.trail[index];
-      if (!visited.has(id) || !relatedDialogues(saved.trail[index - 1], visited).some(entry => entry.id === id)) return false;
+      const previous = saved.trail[index - 1];
+      const legacyOpening = previous === 'opening' && ['test', 'others'].includes(id);
+      if (!visited.has(id) || !(openingQuestions.includes(id) || legacyOpening || relatedDialogues(previous, visited).some(entry => entry.id === id))) return false;
     }
     this.trail = [...saved.trail]; this.history = [...saved.history]; this.visited = visited;
+    this.browsing = saved.browsing === true && this.current.id !== 'opening';
     return true;
   }
   get transcript() {
@@ -484,13 +492,15 @@ export class DialogueJourney {
   get current() {
     return dialogues.find(entry => entry.id === this.trail.at(-1)) || { id: 'opening', text: opening };
   }
-  get choices() { return relatedDialogues(this.current.id, this.visited); }
+  get choices() { return relatedDialogues(this.browsing ? 'opening' : this.current.id, this.visited).filter(entry => entry.id !== this.current.id); }
   get canGoBack() { return this.trail.length > 1; }
   choose(id) {
     if (!this.choices.some(entry => entry.id === id)) return false;
+    this.browsing = false;
     this.visited.add(id); this.trail.push(id); this.history.push(id); return true;
   }
-  back() { if (this.canGoBack) this.trail.pop(); }
-  firstQuestions() { this.trail = ['opening']; }
+  back() { this.browsing = false; if (this.canGoBack) this.trail.pop(); }
+  firstQuestions() { this.browsing = false; this.trail = ['opening']; }
+  changeSubject() { if (this.canGoBack) this.browsing = !this.browsing; }
 }
 

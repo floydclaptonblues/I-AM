@@ -1,5 +1,5 @@
-import { opening, DialogueJourney, questionLabel } from './dialogue.js?v=immersion-1';
-import { loadSession, saveSession } from './session.js?v=immersion-1';
+import { opening, DialogueJourney, questionLabel } from './dialogue.js?v=conversation-2';
+import { loadSession, saveSession } from './session.js?v=conversation-2';
 import { Narrator, FirstVisitGreeting } from './speech.js?v=immersion-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
@@ -92,6 +92,8 @@ function renderChoices({ focus = false, focusId = null } = {}) {
   });
   $('question-list').replaceChildren(fragment);
   $('question-navigation').hidden = !journey.canGoBack;
+  $('first-questions').textContent = journey.browsing ? 'CONTINUE THIS CONVERSATION' : 'ASK SOMETHING ELSE';
+  $('first-questions').setAttribute('aria-label', journey.browsing ? 'Return to follow-up questions' : 'Ask about something else');
   $('questions').scrollTop = 0;
   if (focus) {
     const target = (focusId && $('question-list').querySelector('[data-question="'+focusId+'"]'))
@@ -112,7 +114,13 @@ function returnToQuestions(first = false) {
   remember();
 }
 $('back-questions').addEventListener('click', () => returnToQuestions());
-$('first-questions').addEventListener('click', () => returnToQuestions(true));
+$('first-questions').addEventListener('click', () => {
+  cancelGreeting(); stopResponse(); showText(current.text);
+  journey.changeSubject();
+  renderChoices({ focus: true });
+  $('status').textContent = journey.browsing ? 'Choose another question.' : 'Follow-up questions.';
+  remember();
+});
 $('listen').addEventListener('click', () => play());
 $('hear-opening').addEventListener('click', () => play());
 $('stop').addEventListener('click', () => { cancelGreeting(); stopResponse(); showText(current.text); });

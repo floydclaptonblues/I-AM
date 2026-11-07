@@ -206,3 +206,28 @@ test('browsers without ImageDecoder pause the same garden video frame and resume
   await page.locator('#stop').click();
   await page.waitForFunction(time=>document.getElementById('garden-video').currentTime>time,frame.time);
 });
+
+test('visitors can change subjects without losing the answer or conversation', async t => {
+  const page=await open(t,{width:320,height:568});
+  assert.deepEqual(await page.locator('#question-list button').evaluateAll(nodes=>nodes.map(node=>node.dataset.question)),
+    ['identity','garden','upright','evil','before-humans','age']);
+  await choose(page,'garden');
+  await choose(page,'test');
+  const previous=await page.locator('#answer-accessible').textContent();
+  await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
+  assert.equal(await page.locator('#answer-accessible').textContent(),previous);
+  assert.equal(await page.locator('[data-question="before-humans"]').count(),1);
+  assert.equal(await page.evaluate(()=>document.activeElement.dataset.question),'identity');
+  await page.reload();
+  assert.equal(await page.locator('#answer-accessible').textContent(),previous);
+  await page.getByRole('button',{name:'Return to follow-up questions',exact:true}).click();
+  assert.equal(await page.locator('[data-question="death"]').count(),1);
+  await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
+  await choose(page,'before-humans');
+  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='before-humans').text);
+  assert.equal(await page.evaluate(()=>document.activeElement.id),'caption');
+  await page.getByRole('button',{name:'Go back to the previous questions',exact:true}).click();
+  assert.equal(await page.locator('#answer-accessible').textContent(),previous);
+  assert.equal(await page.locator('[data-question="death"]').count(),1);
+  await audit(page,'change-subject');
+});

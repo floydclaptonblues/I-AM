@@ -5,25 +5,33 @@ import { opening } from '../dialogue.js';
 
 function setup(options = {}) {
   const events = [], utterances = [];
+  const timers = new Map(); let timerId = 0;
   let greeting;
   const narrator = new Narrator({
     synth: { cancel() {}, getVoices: () => [], speak: u => { events.push('speak'); utterances.push(u); } },
     Utterance: class { constructor(text) { this.text = text; } },
-    onState: state => greeting?.observe(state), setTimer: () => 1, clearTimer() {}
+    onState: state => greeting?.observe(state),
+    setTimer: (fn, ms) => { timers.set(++timerId, { fn, ms }); return timerId; }, clearTimer: id => timers.delete(id)
   });
   greeting = new FirstVisitGreeting({
     saved: false, muted: false, play: () => narrator.play(opening),
     remember: () => events.push('save'), onBlocked: () => events.push('fallback'), ...options
   });
-  return { greeting, narrator, events, utterances };
+  return { greeting, narrator, events, utterances, fire(ms) {
+    const timer = [...timers].find(([, value]) => value.ms === ms);
+    assert.ok(timer, 'Expected a timer for ' + ms); timers.delete(timer[0]); timer[1].fn();
+  } };
 }
 
-test('a fresh visit saves first and speaks exactly the opening line once', () => {
+test('a fresh visit saves first and speaks both invitation sentences exactly once', () => {
   const s = setup(); assert.equal(s.greeting.start(), true);
   assert.deepEqual(s.events, ['save', 'speak']);
-  assert.equal(s.utterances[0].text, 'I was always here.');
+  assert.equal(s.utterances[0].text, 'What would you like to know?');
   s.utterances[0].onstart(); s.utterances[0].onend();
-  assert.equal(s.greeting.start(), false); assert.equal(s.utterances.length, 1);
+  s.fire(650);
+  assert.equal(s.utterances[1].text, "Since you already ate from the tree, I can tell you now and you'll understand.");
+  s.utterances[1].onstart(); s.utterances[1].onend();
+  assert.equal(s.greeting.start(), false); assert.equal(s.utterances.length, 2);
 });
 
 test('saved visits and muted visits never queue an automatic opening', () => {
@@ -52,3 +60,4 @@ test('an opening that already started does not offer an autoplay fallback on a l
   const s = setup(); s.greeting.start(); s.utterances[0].onstart(); s.utterances[0].onerror();
   assert.ok(!s.events.includes('fallback'));
 });
+

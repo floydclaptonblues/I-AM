@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { availableDialogues, dialogues } from '../dialogue.js';
+import { availableDialogues, dialogues, DialogueJourney } from '../dialogue.js';
 import { Portrait } from '../portrait.js';
 
-test('six initial questions and conditional follow-ups stay in a stable order', () => {
-  assert.deepEqual(availableDialogues(new Set()).map(d=>d.id), ['garden','test','upright','others','evil','identity']);
+test('six self-contained opening questions and conditional follow-ups stay in a stable order', () => {
+  assert.deepEqual(new DialogueJourney().choices.map(d=>d.id), ['identity','garden','upright','evil','before-humans','age']);
   assert.ok(availableDialogues(new Set(['upright'])).some(d=>d.id==='hands'));
   assert.ok(!availableDialogues(new Set(['evil'])).some(d=>d.id==='memory'));
   assert.ok(availableDialogues(new Set(['evil','identity'])).some(d=>d.id==='memory'));

@@ -64,7 +64,7 @@ test('numbered selections follow the displayed group instead of the global unloc
   assert.equal(journey.choices[0].id, 'age');
   journey.choose(journey.choices[0].id);
   assert.equal(journey.current.id, 'age');
-  assert.equal(journey.choices[0].id, 'hurry');
+  assert.equal(journey.choices[0].id, 'before-humans');
   assert.equal(journey.choices[5], undefined);
 });
 

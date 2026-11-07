@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#151316"><meta name="description" content="I was always here.">
+<meta name="theme-color" content="#151316"><meta name="description" content="What would you like to know? Since you already ate from the tree, I can tell you now and you'll understand.">
 <title>I AM</title><link rel="icon" href="assets/mark.svg" type="image/svg+xml">
 <link rel="preload" as="image" href="assets/serpent-states.webp">
-<meta name="application-version" content="immersion-1">
-<link rel="stylesheet" href="styles.css?v=immersion-1"><script type="module" src="app.js?v=immersion-1"></script>
+<meta name="application-version" content="conversation-2">
+<link rel="stylesheet" href="styles.css?v=conversation-2"><script type="module" src="app.js?v=conversation-2"></script>
 </head><body>
 <div class="garden" aria-hidden="true"><img id="garden-image" src="assets/garden-still.webp" alt=""><canvas id="garden-canvas" hidden></canvas><video id="garden-video" muted loop playsinline preload="none" poster="assets/garden-still.webp" hidden></video></div>
 <main id="encounter" class="console" aria-label="Conversation with the serpent">
@@ -18,7 +18,7 @@
 </section>
 <section class="lower-deck" aria-label="Dialogue">
 <noscript><p>JavaScript is required to speak with the serpent.</p></noscript>
-<div class="response-frame"><div class="panel-heading"><span>SERPENT</span><span id="signal" aria-hidden="true">●</span></div><div id="response-scroll" class="response-scroll" tabindex="-1" role="group" aria-label="Serpent response"><div id="caption" tabindex="-1" role="group" aria-label="Serpent response" aria-describedby="answer-accessible"><p id="answer-visual" aria-hidden="true">I was always here.</p><p id="answer-accessible" class="sr-only">I was always here.</p></div></div></div>
+<div class="response-frame"><div class="panel-heading"><span>SERPENT</span><span id="signal" aria-hidden="true">●</span></div><div id="response-scroll" class="response-scroll" tabindex="-1" role="group" aria-label="Serpent response"><div id="caption" tabindex="-1" role="group" aria-label="Serpent response" aria-describedby="answer-accessible"><p id="answer-visual" aria-hidden="true">What would you like to know? Since you already ate from the tree, I can tell you now and you'll understand.</p><p id="answer-accessible" class="sr-only">What would you like to know? Since you already ate from the tree, I can tell you now and you'll understand.</p></div></div></div>
 <div class="control-rail" aria-label="Conversation controls">
 <button id="mute" type="button" aria-pressed="false" aria-label="Mute voice"><i aria-hidden="true"></i><span>SOUND ON</span></button>
 <button id="hear-opening" type="button" hidden>HEAR THE SERPENT</button>
@@ -30,7 +30,7 @@
 <button id="restart" type="button" aria-controls="restart-dialog">START OVER</button>
 </div></details>
 </div>
-<nav id="questions" class="choices-frame" aria-label="Questions for the serpent"><ol id="question-list"></ol><div id="question-navigation" class="question-navigation" hidden><button id="back-questions" type="button" aria-label="Go back to the previous questions">← BACK</button><button id="first-questions" type="button" aria-label="Return to the opening questions">FIRST QUESTIONS</button></div></nav>
+<nav id="questions" class="choices-frame" aria-label="Questions for the serpent"><ol id="question-list"></ol><div id="question-navigation" class="question-navigation" hidden><button id="back-questions" type="button" aria-label="Go back to the previous questions">← BACK</button><button id="first-questions" type="button" aria-label="Ask about something else">ASK SOMETHING ELSE</button></div></nav>
 <footer class="console-bottom"><i class="screw" aria-hidden="true"></i><div class="bottom-grille" aria-hidden="true"></div><span class="engraved" aria-hidden="true">I AM</span><i class="screw" aria-hidden="true"></i></footer>
 </section><p id="status" class="sr-only" role="status" aria-live="polite"></p></main>
 <dialog id="review-dialog" aria-labelledby="review-title"><header><h2 id="review-title">REVIEW</h2><button id="close-review" type="button" aria-label="Close conversation review">CLOSE</button></header><div id="history"></div></dialog>

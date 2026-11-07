@@ -51,7 +51,7 @@ test('Start Over clears saved history and unlocks while retaining preferences af
 
 test('missing, corrupt, outdated, and invalid saved data safely produce a fresh visit', () => {
   const storage = memory(); assert.equal(loadSession(() => storage), null);
-  for (const raw of ['broken JSON', 'null', '{"version":2}', JSON.stringify({version:1, conversation:{trail:['opening','missing'],history:['missing']}}), JSON.stringify({version:1, conversation:{trail:['opening','work'],history:['work']}}), JSON.stringify({version:1, conversation:{trail:['opening','garden','identity'],history:['garden','identity']}})]) {
+  for (const raw of ['broken JSON', 'null', '{"version":2}', JSON.stringify({version:1, conversation:{trail:['opening','missing'],history:['missing']}}), JSON.stringify({version:1, conversation:{trail:['opening','work'],history:['work']}}), JSON.stringify({version:1, conversation:{trail:['opening','garden','hands'],history:['garden','hands']}})]) {
     storage.setItem(SAVE_KEY, raw); assert.equal(loadSession(() => storage), null);
   }
 });
@@ -82,3 +82,4 @@ test('saved snapshots and restored journeys do not share mutable arrays', () => 
   assert.equal(journey.current.id, 'work'); assert.equal(restored.current.id, 'work');
   assert.equal(restored.history.length, 4);
 });
+
