@@ -51,7 +51,7 @@ async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,m
   // Existing speech tests deliberately exercise the browser-voice fallback.
   if(mock) await page.route('**/assets/audio/manifest.json*',route=>route.fulfill({status:404,body:'Unavailable in fallback test'}));
   page.setDefaultTimeout(15000);
-  const errors=[]; page.on('pageerror',error=>errors.push(error.message));
+  const errors=[]; page.on('pageerror',error=>errors.push(error.stack || error.message));
   t.after(()=>assert.deepEqual(errors,[],'No uncaught browser errors'));
   await page.goto(base,{waitUntil:'networkidle'});
   await page.locator('#question-list button').first().waitFor();

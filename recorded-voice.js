@@ -8,9 +8,9 @@ export class RecordedNarrator {
     this.onSentence = options.onSentence || (() => {});
     this.onWord = options.onWord || (() => {});
     this.setTimer = options.setTimer || ((fn,ms) => setTimeout(fn,ms));
-    this.clearTimer = options.clearTimer || clearTimeout;
+    this.clearTimer = options.clearTimer || (id => clearTimeout(id));
     this.requestFrame = options.requestFrame || (fn => requestAnimationFrame(fn));
-    this.cancelFrame = options.cancelFrame || cancelAnimationFrame;
+    this.cancelFrame = options.cancelFrame || (id => cancelAnimationFrame(id));
     this.fallback = new Narrator(options);
     this.audio = (options.createAudio || (() => {
       const element = document.createElement('audio');
