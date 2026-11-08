@@ -104,6 +104,12 @@ def british(pipeline, text):
 
 def align(lead, lead_words, shadow, shadow_words, stem):
     """Map each common word onset onto the lead using a continuous time warp."""
+    # eSpeak combines some phrases ("I am") into one event. Measure coverage of
+    # its actual boundaries, not of the British engine's finer tokenization.
+    # Remove the model's leading padding so the first spoken onsets also match.
+    trim = round(shadow_words[0]['time']*SR)
+    shadow = shadow[trim:]
+    shadow_words = [{**word,'time':max(0,word['time']-trim/SR)} for word in shadow_words]
     targets = {word['start']:word['time'] for word in lead_words}
     anchors = [(0,0)]
     for word in shadow_words:
@@ -114,7 +120,8 @@ def align(lead, lead_words, shadow, shadow_words, stem):
         if src > anchors[-1][0] and dst > anchors[-1][1] and src < len(shadow) and dst < len(lead):
             anchors.append((src,dst))
     anchors.append((len(shadow),len(lead)))
-    coverage = sum(word['start'] in targets for word in shadow_words)/len(shadow_words)
+    source_starts = {word['start'] for word in shadow_words}
+    coverage = sum(start in source_starts for start in targets)/len(targets)
     if coverage < .80:
         raise ValueError(f'Insufficient word alignment coverage: {coverage:.2%}; lead={lead_words}; British={shadow_words}; sentence={stem}')
     source = Path(str(stem)+'.british.wav')
