@@ -31,7 +31,7 @@ test('one mixed recording drives the sentence and word cues from its media clock
 });
 test('quiet finale settings apply to both mixed voices and reset for ordinary answers',async()=>{
   const s=setup();await s.narrator.play(text,{rate:.85,volume:.55});
-  assert.equal(s.audio.volume,.55);assert.equal(s.audio.playbackRate,.85);assert.equal(s.audio.preservesPitch,true);
+  assert.equal(s.audio.volume,.55);assert.equal(s.audio.playbackRate,.85);assert.equal(s.audio.defaultPlaybackRate,.85);assert.equal(s.audio.preservesPitch,true);
   await s.narrator.play(text);assert.equal(s.audio.volume,1);assert.equal(s.audio.playbackRate,1);
 });
 test('Stop during catalog loading cannot start either voice later',async()=>{

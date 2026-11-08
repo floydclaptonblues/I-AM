@@ -65,6 +65,8 @@ export class RecordedNarrator {
     }
     this.audio.dataset.mode = 'layered';
     const rate = Math.min(2,Math.max(.5,options.rate ?? 1));
+    // Loading a new source resets playbackRate to defaultPlaybackRate.
+    this.audio.defaultPlaybackRate = rate;
     this.audio.playbackRate = rate;
     this.audio.preservesPitch = true;
     this.audio.volume = Math.min(1,Math.max(0,options.volume ?? 1));
