@@ -391,11 +391,11 @@ export function isUnlocked(entry, visited) {
 
 // Subjects organize the visitor's questions; they never count as discoveries.
 export const subjects = [
-  { id:'universe', label:'Ask me about the universe', title:'The universe', questions:['before-humans','why-wait','before-light','other-lights','names-of-lights','fill-darkness','darkness-fear','darkness-end','shadows','nothing-darkness','darkness-ended','certain-light','you-darkness'] },
-  { id:'garden', label:'Ask me about the garden', title:'The garden', questions:['garden','test','others','paradise','return','came-garden'] },
-  { id:'god', label:'Ask me about God', title:'God', questions:['evil','darkness','abandoned','father-brighter','god-knows','believe-father','want-god','questioned-father'] },
-  { id:'humanity', label:'Ask me about humanity', title:'Humanity', questions:['upright','hands','human','purpose','work','death','burial','remember','hurry','free','called-back','happy','want-more','become'] },
-  { id:'serpent', label:'Ask me about myself', title:'The serpent', questions:['identity','age','light','memory','hate','lied','believe','enjoy','enjoyed-suffering','alone-with-lights'] }
+  { id:'universe', label:'The Universe', title:'The Universe', questions:['before-humans','why-wait','before-light','other-lights','names-of-lights','fill-darkness','darkness-fear','darkness-end','shadows','nothing-darkness','darkness-ended','certain-light','you-darkness'] },
+  { id:'garden', label:'The Garden', title:'The Garden', questions:['garden','test','others','paradise','return','came-garden'] },
+  { id:'god', label:'God', title:'God', questions:['evil','darkness','abandoned','father-brighter','god-knows','believe-father','want-god','questioned-father'] },
+  { id:'humanity', label:'Humanity', title:'Humanity', questions:['upright','hands','human','purpose','work','death','burial','remember','hurry','free','called-back','happy','want-more','become'] },
+  { id:'serpent', label:'I Am', title:'I Am', questions:['identity','age','light','memory','hate','lied','believe','enjoy','enjoyed-suffering','alone-with-lights'] }
 ];
 export function subjectQuestions(id, visited) {
   const subject = subjects.find(item => item.id === id);
