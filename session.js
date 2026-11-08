@@ -1,4 +1,4 @@
-import { DialogueJourney } from './dialogue.js?v=conversation-2';
+import { DialogueJourney } from './dialogue.js?v=subjects-1';
 
 export const SAVE_KEY = 'i-am.garden.session';
 // Store only canonical question IDs and preferences, never rendered text or audio.

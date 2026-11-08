@@ -389,6 +389,22 @@ export function isUnlocked(entry, visited) {
     || (entry.requiresAny || []).some(group => group.every(id => visited.has(id)));
 }
 
+// Subjects organize the visitor's questions; they never count as discoveries.
+export const subjects = [
+  { id:'universe', label:'Ask me about the universe', title:'The universe', questions:['before-humans','why-wait','before-light','other-lights','names-of-lights','fill-darkness','darkness-fear','darkness-end','shadows','nothing-darkness','darkness-ended','certain-light','you-darkness'] },
+  { id:'garden', label:'Ask me about the garden', title:'The garden', questions:['garden','test','others','paradise','return','came-garden'] },
+  { id:'god', label:'Ask me about God', title:'God', questions:['evil','darkness','abandoned','father-brighter','god-knows','believe-father','want-god','questioned-father'] },
+  { id:'humanity', label:'Ask me about humanity', title:'Humanity', questions:['upright','hands','human','purpose','work','death','burial','remember','hurry','free','called-back','happy','want-more','become'] },
+  { id:'serpent', label:'Ask me about myself', title:'The serpent', questions:['identity','age','light','memory','hate','lied','believe','enjoy','enjoyed-suffering','alone-with-lights'] }
+];
+export function subjectQuestions(id, visited) {
+  const subject = subjects.find(item => item.id === id);
+  const context = { test:'garden', others:'test' };
+  return (subject?.questions || []).map(id => dialogues.find(entry => entry.id === id))
+    .filter(entry => isUnlocked(entry, visited)
+      && (!context[entry.id] || visited.has(context[entry.id]) || visited.has(entry.id)));
+}
+
 const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory', "human", "purpose", "work", "death", "burial", "remember", "hurry", "free", "hate", "darkness", "abandoned", "lied", "believe", "paradise", "return", "enjoy", "age"].concat(["before-humans","why-wait","before-light","other-lights","names-of-lights","fill-darkness","father-brighter","darkness-fear","darkness-end","shadows","called-back","happy","want-more","came-garden","become","god-knows","believe-father","want-god","nothing-darkness","darkness-ended","certain-light","you-darkness"]);
 export function availableDialogues(visited) {
   return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions]
@@ -463,8 +479,8 @@ export function relatedDialogues(currentId, visited) {
 
 export class DialogueJourney {
   constructor() { this.reset(); }
-  reset() { this.trail = ['opening']; this.visited = new Set(); this.history = []; this.browsing = false; }
-  snapshot() { return { trail: [...this.trail], history: [...this.history], browsing: this.browsing }; }
+  reset() { this.trail = ['opening']; this.visited = new Set(); this.history = []; this.browsing = false; this.subject = null; }
+  snapshot() { return { trail: [...this.trail], history: [...this.history], browsing: this.browsing, subject: this.subject }; }
   restore(saved) {
     if (!saved || !Array.isArray(saved.trail) || !Array.isArray(saved.history) || saved.trail[0] !== 'opening') return false;
     const visited = new Set();
@@ -477,10 +493,11 @@ export class DialogueJourney {
       const id = saved.trail[index];
       const previous = saved.trail[index - 1];
       const legacyOpening = previous === 'opening' && ['test', 'others'].includes(id);
-      if (!visited.has(id) || !(openingQuestions.includes(id) || legacyOpening || relatedDialogues(previous, visited).some(entry => entry.id === id))) return false;
+      if (!visited.has(id) || !(openingQuestions.includes(id) || legacyOpening || relatedDialogues(previous, visited).some(entry => entry.id === id) || subjects.some(subject => subjectQuestions(subject.id, visited).some(entry => entry.id === id)))) return false;
     }
     this.trail = [...saved.trail]; this.history = [...saved.history]; this.visited = visited;
     this.browsing = saved.browsing === true && this.current.id !== 'opening';
+    this.subject = (this.browsing || this.current.id === 'opening') && subjects.some(item => item.id === saved.subject) ? saved.subject : null;
     return true;
   }
   get transcript() {
@@ -493,14 +510,25 @@ export class DialogueJourney {
     return dialogues.find(entry => entry.id === this.trail.at(-1)) || { id: 'opening', text: opening };
   }
   get choices() { return relatedDialogues(this.browsing ? 'opening' : this.current.id, this.visited).filter(entry => entry.id !== this.current.id); }
+  get showingSubjects() { return (this.current.id === 'opening' || this.browsing) && !this.subject; }
+  get menuChoices() {
+    if (this.showingSubjects) return subjects.map(subject => ({...subject, kind:'subject'}));
+    if (this.subject) return subjectQuestions(this.subject, this.visited).filter(entry => entry.id !== this.current.id);
+    return this.choices;
+  }
+  selectSubject(id) {
+    if (!subjects.some(subject => subject.id === id)) return false;
+    this.subject = id; this.browsing = this.current.id !== 'opening'; return true;
+  }
+  showSubjects() { this.subject = null; this.browsing = this.current.id !== 'opening'; }
   get canGoBack() { return this.trail.length > 1; }
   choose(id) {
-    if (!this.choices.some(entry => entry.id === id)) return false;
-    this.browsing = false;
+    if (!(this.subject ? this.menuChoices : this.choices).some(entry => entry.id === id)) return false;
+    this.browsing = false; this.subject = null;
     this.visited.add(id); this.trail.push(id); this.history.push(id); return true;
   }
-  back() { this.browsing = false; if (this.canGoBack) this.trail.pop(); }
-  firstQuestions() { this.browsing = false; this.trail = ['opening']; }
-  changeSubject() { if (this.canGoBack) this.browsing = !this.browsing; }
+  back() { this.subject = null; this.browsing = false; if (this.canGoBack) this.trail.pop(); }
+  firstQuestions() { this.subject = null; this.browsing = false; this.trail = ['opening']; }
+  changeSubject() { if (this.subject) this.showSubjects(); else if (this.canGoBack) this.browsing = !this.browsing; }
 }
 

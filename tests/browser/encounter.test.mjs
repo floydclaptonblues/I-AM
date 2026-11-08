@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
-import { dialogues, DialogueJourney, opening } from '../../dialogue.js';
+import { dialogues, DialogueJourney, opening, subjects } from '../../dialogue.js';
 
 const require = createRequire(import.meta.url);
 const base = process.env.BASE_URL || 'http://127.0.0.1:4173/';
@@ -34,7 +34,13 @@ function savedJourney(route=[]) {
   return journey.snapshot();
 }
 const finaleRoute=['identity','age','before-humans','why-wait','before-light','father-brighter','god-knows','believe-father','want-god','fill-darkness','darkness-end','nothing-darkness','darkness-ended','called-back','happy','certain-light'];
-const choose = (page,id) => page.locator('[data-question="'+id+'"]').click();
+const choose = async (page,id) => {
+  if (!await page.locator('[data-question="'+id+'"]').count()) {
+    const subject = subjects.find(subject => subject.questions.includes(id));
+    await page.locator('[data-subject="'+subject.id+'"]').click();
+  }
+  await page.locator('[data-question="'+id+'"]').click();
+};
 async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,mock=true,nativeFallback=false}={}) {
   const context = await browser.newContext({ viewport:{width,height}, reducedMotion:reduced?'reduce':'no-preference' });
   t.after(()=>context.close());
@@ -83,6 +89,7 @@ for(const [width,height] of [[320,568],[375,667],[390,844],[768,1024],[1366,768]
 
 test('keyboard focus receives one complete answer; speech never replaces or rearranges it',async t=>{
   const page=await open(t,{muted:false});
+  await page.locator('[data-subject="god"]').click();
   await page.locator('[data-question="evil"]').focus(); await page.keyboard.press('Enter');
   const text=dialogues.find(d=>d.id==='evil').text;
   assert.equal(await page.locator('#answer-accessible').textContent(),text);
@@ -209,15 +216,15 @@ test('browsers without ImageDecoder pause the same garden video frame and resume
 
 test('visitors can change subjects without losing the answer or conversation', async t => {
   const page=await open(t,{width:320,height:568});
-  assert.deepEqual(await page.locator('#question-list button').evaluateAll(nodes=>nodes.map(node=>node.dataset.question)),
-    ['identity','garden','upright','evil','before-humans','age']);
+  assert.deepEqual(await page.locator('#question-list button').evaluateAll(nodes=>nodes.map(node=>node.dataset.subject)),
+    ['universe','garden','god','humanity','serpent']);
   await choose(page,'garden');
   await choose(page,'test');
   const previous=await page.locator('#answer-accessible').textContent();
   await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
   assert.equal(await page.locator('#answer-accessible').textContent(),previous);
-  assert.equal(await page.locator('[data-question="before-humans"]').count(),1);
-  assert.equal(await page.evaluate(()=>document.activeElement.dataset.question),'identity');
+  assert.equal(await page.locator('[data-subject="universe"]').count(),1);
+  assert.equal(await page.evaluate(()=>document.activeElement.dataset.subject),'universe');
   await page.reload();
   assert.equal(await page.locator('#answer-accessible').textContent(),previous);
   await page.getByRole('button',{name:'Return to follow-up questions',exact:true}).click();
@@ -236,4 +243,29 @@ test('visitors can change subjects without losing the answer or conversation', a
   assert.ok(focusBounds.question>=focusBounds.portrait,JSON.stringify(focusBounds));
   await page.screenshot({path:results+'/change-subject-320.png',fullPage:true});
   await audit(page,'change-subject');
+});
+
+
+test('subject menus work with number keys, preserve the answer, and restore after refresh', async t => {
+  const page = await open(t,{width:320,height:568,muted:false});
+  const invitation = await page.locator('#answer-accessible').textContent();
+  await page.keyboard.press('1');
+  assert.equal(await page.locator('#subject-title').textContent(),'The universe');
+  assert.equal(await page.locator('#answer-accessible').textContent(),invitation);
+  assert.equal(await page.evaluate(()=>testUtterances.length),0);
+  assert.equal(await page.evaluate(()=>document.activeElement.dataset.question),'before-humans');
+  await page.reload();
+  assert.equal(await page.locator('#subject-title').textContent(),'The universe');
+  assert.equal(await page.locator('[data-question="you-darkness"]').count(),0);
+  await audit(page,'subject-universe');
+  await page.screenshot({path:results+'/subject-universe-320.png',fullPage:true});
+  await page.getByRole('button',{name:'Return to subjects',exact:true}).click();
+  assert.equal(await page.evaluate(()=>document.activeElement.dataset.subject),'universe');
+  await page.keyboard.press('2');
+  assert.equal(await page.locator('#subject-title').textContent(),'The garden');
+  assert.equal(await page.locator('[data-question="test"]').count(),0);
+  await page.keyboard.press('1');
+  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden').text);
+  assert.equal(await page.locator('[data-question="test"]').count(),1);
+  assert.equal(await page.evaluate(()=>document.activeElement.id),'caption');
 });

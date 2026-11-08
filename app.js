@@ -1,5 +1,5 @@
-import { opening, DialogueJourney, questionLabel } from './dialogue.js?v=conversation-2';
-import { loadSession, saveSession } from './session.js?v=conversation-2';
+import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=subjects-1';
+import { loadSession, saveSession } from './session.js?v=subjects-1';
 import { Narrator, FirstVisitGreeting } from './speech.js?v=immersion-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
@@ -68,6 +68,12 @@ function play({ focus = false } = {}) {
   narrator.play(current.text);
 }
 function choose(entry) {
+  if (entry.kind === 'subject') {
+    cancelGreeting(); stopResponse(); showText(current.text);
+    journey.selectSubject(entry.id); renderChoices({ focus:true });
+    $('status').textContent = 'Questions about ' + subjects.find(subject => subject.id === entry.id).title.toLowerCase() + '.';
+    remember(); return;
+  }
   if (!journey.choose(entry.id)) return;
   stopResponse();
   current = journey.current;
@@ -82,21 +88,30 @@ function remember() {
 }
 function renderChoices({ focus = false, focusId = null } = {}) {
   const fragment = document.createDocumentFragment();
-  journey.choices.forEach((entry,index) => {
+  journey.menuChoices.forEach((entry,index) => {
     const li = document.createElement('li'), button = document.createElement('button');
     const number = document.createElement('span'); number.className='choice-number'; number.textContent = String(index+1)+'.'; number.setAttribute('aria-hidden','true');
     const label = document.createElement('span'); label.textContent = questionLabel(entry);
-    button.type='button'; button.dataset.question=entry.id; button.dataset.visited=String(journey.visited.has(entry.id));
-    button.setAttribute('aria-controls','caption');
+    button.type='button';
+    if (entry.kind === 'subject') button.dataset.subject=entry.id;
+    else { button.dataset.question=entry.id; button.dataset.visited=String(journey.visited.has(entry.id)); }
+    button.setAttribute('aria-controls',entry.kind === 'subject' ? 'question-list' : 'caption');
     button.append(number,label); button.addEventListener('click',()=>choose(entry)); li.append(button); fragment.append(li);
   });
   $('question-list').replaceChildren(fragment);
-  $('question-navigation').hidden = !journey.canGoBack;
+  const selectedSubject = subjects.find(subject => subject.id === journey.subject);
+  $('subject-title').hidden = !selectedSubject;
+  $('subject-title').textContent = selectedSubject?.title || '';
+  $('questions').setAttribute('aria-label', selectedSubject ? 'Questions about ' + selectedSubject.title : journey.showingSubjects ? 'Subjects to ask the serpent about' : 'Questions for the serpent');
+  $('question-navigation').hidden = !journey.canGoBack && !selectedSubject;
+  $('back-questions').hidden = journey.showingSubjects;
+  $('back-questions').setAttribute('aria-label', selectedSubject ? 'Return to subjects' : 'Go back to the previous questions');
+  $('first-questions').hidden = Boolean(selectedSubject);
   $('first-questions').textContent = journey.browsing ? 'CONTINUE THIS CONVERSATION' : 'ASK SOMETHING ELSE';
   $('first-questions').setAttribute('aria-label', journey.browsing ? 'Return to follow-up questions' : 'Ask about something else');
   $('questions').scrollTop = 0;
   if (focus) {
-    const target = (focusId && $('question-list').querySelector('[data-question="'+focusId+'"]'))
+    const target = (focusId && $('question-list').querySelector('[data-question="'+focusId+'"], [data-subject="'+focusId+'"]'))
       || $('question-list').querySelector('button') || $('back-questions');
     target.focus({ preventScroll: true });
     target.scrollIntoView({ block: 'center', behavior: 'instant' });
@@ -104,14 +119,15 @@ function renderChoices({ focus = false, focusId = null } = {}) {
 }
 function returnToQuestions(first = false) {
   cancelGreeting();
-  const focusId = first ? journey.trail[1] : current.id;
+  const focusId = journey.subject || (first ? journey.trail[1] : current.id);
+  const wasSubject = Boolean(journey.subject);
   stopResponse();
-  if (first) journey.firstQuestions(); else journey.back();
+  if (wasSubject) journey.showSubjects(); else if (first) journey.firstQuestions(); else journey.back();
   current = journey.current;
   updateSound();
   showText(current.text);
   renderChoices({ focus: true, focusId });
-  $('status').textContent = first ? 'Opening questions.' : 'Earlier questions.';
+  $('status').textContent = journey.showingSubjects ? 'Choose a subject.' : 'Earlier questions.';
   remember();
 }
 $('back-questions').addEventListener('click', () => returnToQuestions());
@@ -119,7 +135,7 @@ $('first-questions').addEventListener('click', () => {
   cancelGreeting(); stopResponse(); showText(current.text);
   journey.changeSubject();
   renderChoices({ focus: true });
-  $('status').textContent = journey.browsing ? 'Choose another question.' : 'Follow-up questions.';
+  $('status').textContent = journey.showingSubjects ? 'Choose a subject.' : 'Follow-up questions.';
   remember();
 });
 $('listen').addEventListener('click', () => play());
@@ -185,7 +201,7 @@ $('confirm-restart').addEventListener('click', () => {
 document.addEventListener('keydown',event=>{
   if($('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
   if(/^[1-9]$/.test(event.key)){
-    const entry=journey.choices[Number(event.key)-1];if(entry && !heldResponse.active){event.preventDefault();choose(entry);}
+    const entry=journey.menuChoices[Number(event.key)-1];if(entry && !heldResponse.active){event.preventDefault();choose(entry);}
   }else if(event.key==='Escape'){cancelGreeting();stopResponse();showText(current.text);}
 });
 document.addEventListener('visibilitychange',()=>{

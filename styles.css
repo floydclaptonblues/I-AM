@@ -808,3 +808,5 @@ dialog header,dialog article {
   .choices-frame button[data-visited=true] span:last-child{text-decoration:underline dotted}
   #answer-visual .spoken-word{outline:1px solid Highlight}
 }
+
+.subject-title { margin: 4px 8px 8px; color: var(--ivory, #e8dfc6); font: inherit; font-size: 16px; letter-spacing: .04em; }
