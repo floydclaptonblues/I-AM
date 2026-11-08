@@ -48,6 +48,8 @@ async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,m
     }
   },{conversation:savedJourney(route),muted,mock,nativeFallback});
   const page=await context.newPage();
+  // Existing speech tests deliberately exercise the browser-voice fallback.
+  if(mock) await page.route('**/assets/audio/manifest.json*',route=>route.fulfill({status:404,body:'Unavailable in fallback test'}));
   page.setDefaultTimeout(15000);
   const errors=[]; page.on('pageerror',error=>errors.push(error.message));
   t.after(()=>assert.deepEqual(errors,[],'No uncaught browser errors'));
@@ -95,6 +97,7 @@ test('keyboard focus receives one complete answer; speech never replaces or rear
   assert.equal(await page.locator('#question-list [aria-pressed]').count(),0);
   assert.equal(await page.locator('#caption [aria-live]').count(),0);
   const before=await page.locator('#answer-visual').boundingBox();
+  await page.waitForFunction(()=>testUtterances.length>0);
   await page.evaluate(()=>{const u=testUtterances.at(-1);u.onstart();u.onboundary({name:'word',charIndex:0,charLength:1});});
   assert.ok(await page.locator('.spoken-word').count());
   assert.equal(await page.locator('#answer-visual').textContent(),text);
@@ -110,6 +113,7 @@ test('keyboard focus receives one complete answer; speech never replaces or rear
 
 test('speech failure retains the complete answer and releases controls',async t=>{
   const page=await open(t,{muted:false});await choose(page,'garden');await choose(page,'test');
+  await page.waitForFunction(()=>testUtterances.length>0);
   await page.evaluate(()=>testUtterances.at(-1).onerror({error:'not-allowed'}));
   assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='test').text);
   assert.equal(await page.locator('#stop').isDisabled(),true);
@@ -236,4 +240,50 @@ test('visitors can change subjects without losing the answer or conversation', a
   assert.ok(focusBounds.question>=focusBounds.portrait,JSON.stringify(focusBounds));
   await page.screenshot({path:results+'/change-subject-320.png',fullPage:true});
   await audit(page,'change-subject');
+});
+
+test('all fixed recordings preserve the script and carry usable word timing',async()=>{
+  const {readFile}=await import('node:fs/promises');
+  const manifest=JSON.parse(await readFile('assets/audio/manifest.json','utf8'));
+  const expected=[{id:'opening',text:opening},...dialogues];
+  assert.equal(Object.keys(manifest.clips).length,expected.length);
+  for(const {id,text} of expected) {
+    const clip=manifest.clips[id];assert.equal(clip.text,text,id);
+    assert.ok(clip.duration>0 && clip.words.length>0,id);
+    assert.ok(clip.words.every((word,index)=>word.time>=0 && word.time<clip.duration
+      && (index===0 || word.time>=clip.words[index-1].time)),id+' ordered word cues');
+    assert.ok(clip.sentences.every(sentence=>sentence.time<sentence.end && sentence.end<=clip.duration+.01),id);
+  }
+  const report=JSON.parse(await readFile('assets/audio/alignment-report.json','utf8'));
+  assert.ok(report.length>expected.length);
+  assert.ok(report.every(row=>row.coverage>=.8 && row.peak<=.941 && row.samples>0));
+});
+
+test('the real mixed recording plays from one clock and mute stops both layers',async t=>{
+  const page=await open(t,{muted:false,mock:false});
+  await choose(page,'identity');
+  await page.waitForFunction(()=>document.querySelector('#voice-track')?.currentTime>.4);
+  const media=await page.locator('#voice-track').evaluate(el=>({mode:el.dataset.mode,src:el.currentSrc,paused:el.paused,duration:el.duration}));
+  assert.equal(media.mode,'layered');assert.equal(media.paused,false);assert.ok(media.duration>1);
+  assert.match(media.src,/identity-.*\.mp3$/);
+  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='identity').text);
+  await page.getByRole('button',{name:'Mute voice',exact:true}).click();
+  assert.equal(await page.locator('#voice-track').evaluate(el=>el.paused),true);
+  assert.equal(await page.locator('#stop').isDisabled(),true);
+  assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
+});
+
+test('the held revelation uses the quiet mixed track after its silence',async t=>{
+  const page=await open(t,{muted:false,mock:false,route:finaleRoute});
+  await choose(page,'you-darkness');
+  assert.equal(await page.locator('#answer-accessible').textContent(),'');
+  assert.equal(await page.locator('#question-list').isHidden(),true);
+  await page.waitForFunction(()=>document.querySelector('#voice-track')?.currentTime>.15);
+  assert.equal(await page.locator('#voice-track').evaluate(el=>el.dataset.mode),'layered');
+  assert.equal(await page.locator('#voice-track').evaluate(el=>el.volume),.55);
+  assert.equal(await page.locator('#voice-track').evaluate(el=>el.playbackRate),.85);
+  assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
+  await page.getByRole('button',{name:'Stop narration',exact:true}).click();
+  assert.equal(await page.locator('#question-list').isVisible(),true);
+  assert.equal(await page.locator('#voice-track').evaluate(el=>el.paused),true);
 });
