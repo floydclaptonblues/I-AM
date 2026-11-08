@@ -116,7 +116,7 @@ def align(lead, lead_words, shadow, shadow_words, stem):
     anchors.append((len(shadow),len(lead)))
     coverage = sum(word['start'] in targets for word in shadow_words)/len(shadow_words)
     if coverage < .80:
-        raise ValueError(f'Insufficient word alignment coverage: {coverage:.2%}')
+        raise ValueError(f'Insufficient word alignment coverage: {coverage:.2%}; lead={lead_words}; British={shadow_words}; sentence={stem}')
     source = Path(str(stem)+'.british.wav')
     aligned = Path(str(stem)+'.aligned.wav')
     mapping = Path(str(stem)+'.map.txt')
