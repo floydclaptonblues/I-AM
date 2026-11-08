@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   build:
+    timeout-minutes: 35
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -24,6 +25,7 @@ jobs:
         run: |
           npm test
           npm run check
+      - uses: ./.github/actions/prepare-voices
       - name: Check browser interactions and accessibility
         # The same browser checks run on the working branch before publication.
         # Keep production gated on interaction, layout and accessibility checks.
