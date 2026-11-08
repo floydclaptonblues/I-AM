@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   verify:
-    timeout-minutes: 35
+    timeout-minutes: 10
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -15,11 +15,6 @@ jobs:
         with:
           node-version: '24'
       - run: npm test && npm run check
-      - uses: ./.github/actions/prepare-voices
-      - uses: actions/upload-artifact@v4
-        with:
-          name: synchronized-voice-recordings
-          path: assets/audio/
       - name: Install browser test tools
         run: npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 axe-core@4.11.0
       - run: npx playwright install --with-deps chromium

@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 concurrency:
   group: garden-pages
@@ -15,7 +14,6 @@ concurrency:
 
 jobs:
   build:
-    timeout-minutes: 35
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -26,33 +24,6 @@ jobs:
         run: |
           npm test
           npm run check
-      - name: Find recordings verified for this exact commit
-        id: verified-voices
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const runs = await github.rest.actions.listWorkflowRuns({
-              ...context.repo, workflow_id: 'verify.yml', head_sha: context.sha,
-              status: 'success', per_page: 10
-            });
-            for (const run of runs.data.workflow_runs) {
-              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-                ...context.repo, run_id: run.id
-              });
-              if (artifacts.data.artifacts.some(a => a.name === 'synchronized-voice-recordings' && !a.expired)) {
-                core.setOutput('run-id', String(run.id));
-                break;
-              }
-            }
-      - uses: actions/download-artifact@v4
-        if: steps.verified-voices.outputs.run-id != ''
-        with:
-          name: synchronized-voice-recordings
-          path: assets/audio
-          github-token: ${{ github.token }}
-          run-id: ${{ steps.verified-voices.outputs.run-id }}
-      - uses: ./.github/actions/prepare-voices
-        if: steps.verified-voices.outputs.run-id == ''
       - name: Check browser interactions and accessibility
         # The same browser checks run on the working branch before publication.
         # Keep production gated on interaction, layout and accessibility checks.

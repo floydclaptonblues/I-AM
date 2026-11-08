@@ -1,7 +1,6 @@
 import { opening, DialogueJourney, questionLabel } from './dialogue.js?v=conversation-2';
 import { loadSession, saveSession } from './session.js?v=conversation-2';
-import { FirstVisitGreeting } from './speech.js?v=immersion-1';
-import { RecordedNarrator } from './recorded-voice.js?v=layered-1';
+import { Narrator, FirstVisitGreeting } from './speech.js?v=immersion-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
 import { Portrait } from './portrait.js';
@@ -23,7 +22,7 @@ function focusAnswer() {
   $('caption').focus({ preventScroll: true });
   if (!heldResponse?.active) $('caption').scrollIntoView({ block: 'start', behavior: 'instant' });
 }
-const narrator = new RecordedNarrator({
+const narrator = new Narrator({
   synth, Utterance: window.SpeechSynthesisUtterance,
   onState(state) {
     const speaking = state === 'speaking';
@@ -44,9 +43,6 @@ const narrator = new RecordedNarrator({
     answer.word(index, size);
   }
 });
-// Fetch timing metadata early so a question click can start media immediately.
-void narrator.loadCatalog();
-
 greeting = new FirstVisitGreeting({
   saved: Boolean(saved), muted,
   play: () => narrator.play(opening), remember,

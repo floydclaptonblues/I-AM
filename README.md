@@ -4,7 +4,7 @@ A static dialogue encounter. Open the site and question the serpent.
 
 ## Run
 
-Node.js 18+ for the app. Local runs without generated audio use browser speech; production builds the fixed voice recordings.
+Node.js 18+; no packages or build step required.
 
 ```sh
 npm start
@@ -39,11 +39,7 @@ The three core answers (`garden`, `test`, and `evil`) are unchanged from commit 
 
 The metal, grain, frame, controls, and interface are original code-native artwork. No Fallout images, logos, textures, or sound files are included. See [asset provenance](assets/PROVENANCE.md) for the supplied GIF/video and the derived portrait set.
 
-Primary narration uses fixed recordings: an eSpeak NG en-US robotic lead with a quieter Kokoro bm_george British male underlay, lowered two semitones and mixed at -10 dB relative to the lead. Both speak the unchanged script. Rubber Band maps shared word/phrase onsets before mixing each complete answer into one MP3; this prevents playback drift. Different pronunciation and phoneme timing remain audible by design. The opening and all 51 answers have recordings. Speech cues follow the same media clock, including playback-rate changes, and drive the portrait and highlighting. Stop, mute, navigation and page hiding cancel both layers together. The finale retains its three-second hold, 0.85 rate and 0.55 volume.
-
-The build uses Python 3.11, CPU PyTorch, pinned speech packages, eSpeak NG, Rubber Band and ffmpeg (see the prepare-voices composite action). It downloads the open Kokoro model during generation; visitors receive only static audio and metadata, with no AI service or microphone access. Generate locally with those dependencies, then run node scripts/export-voice-script.mjs and python scripts/render-voices.py. Assets are cached by renderer and dialogue inputs; they are excluded from git and packaged by Pages. Each answer is loaded on demand. The audio artifact includes an alignment report and separate opening stems for comparison.
-
-Browser speech remains an emergency fallback if a recording is unavailable before playback starts, including local development without generated assets. A failure after playback starts never repeats already spoken words. Autoplay refusal offers the existing Hear the serpent control. The fallback prefers English David, Daniel or George voices; its accent and quality depend on the OS. It retains 300 ms ordinary and 650 ms rhetorical pauses and cancellation guards. Some browser fallback voices use vendor online services. This is word-event portrait articulation, not phoneme-perfect lip synchronization.
+Browser speech synthesis chooses available English voices, preferring David, Daniel, or George. Rate is 1.0 (about 22% faster than the previous 0.82 setting) and pitch is approximately 0.356 (0.4 multiplied by the frequency ratio for -2 semitones). This is a best-effort pitch approximation: the browser API uses a voice-dependent pitch scale, not calibrated semitones. Ordinary pauses are 300 ms; rhetorical transitions are 650 ms, with optional explicit per-sentence timing. A voice that fails before starting retries once with an alternate local voice or the browser default. Cancellation invalidates retries, and speech that already started is never automatically repeated. Idle cleanup no longer sends redundant cancellation calls; a paused engine resumes before speaking. The mouth rests during these pauses; Stop, mute, switching questions, and leaving the page cancel the pending next sentence. Voice quality, word timing, and availability depend on the browser/OS; this is speech-event articulation, not phoneme-perfect lip synchronization. The app requests no microphone access and runs no custom AI service. Some browser voices use the browser vendor's online speech services.
 
 ## Source map
 
@@ -53,9 +49,7 @@ Browser speech remains an emergency fallback if a recording is unavailable befor
 - `dialogue.js`: original answers, additional dialogue, unlock requirements
 - `response.js`: cancellable silence and held gaze for the late response
 - `session.js`: versioned browser-local persistence with validation and graceful storage failures
-- `recorded-voice.js`: single-clock layered recordings, timed cues and cancellation
-- `speech.js`: browser speech fallback and first-visit greeting
-- `scripts/render-voices.py`: offline dual-voice generation, alignment and mix
+- `speech.js`: speech synthesis lifecycle and cancellation guards
 - `portrait.js`: discrete mouth states and independent blinking
 - `assets/`: original garden GIF/still, archived night photograph, portrait sheet, texture, favicon, provenance
 - `tests/`: speech lifecycle, unchanged core dialogue, unlock logic, portrait motion and copy audit
@@ -64,7 +58,7 @@ Browser speech remains an emergency fallback if a recording is unavailable befor
 
 ## Validation and recovery
 
-`npm test` covers 75 cases including rapid switching, cancellation, failed speech, bounded startup retry, paused-engine recovery, full narration of all 51 answers, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, all 22 supplied passages verbatim, all 26 earlier exchanges unchanged, existing-save compatibility, late-stage gates, repeatable held responses, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
+`npm test` covers 64 cases including rapid switching, cancellation, failed speech, bounded startup retry, paused-engine recovery, full narration of all 51 answers, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, all 22 supplied passages verbatim, all 26 earlier exchanges unchanged, existing-save compatibility, late-stage gates, repeatable held responses, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
 
 The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.
 
@@ -84,7 +78,3 @@ Run `npm test` and `npm run check` without dependencies. Browser checks addition
 
 The original 55 unit cases are retained. Content counts now include the three additions; the First Light fixture still compares exactly its original 22 exchanges. The bounded-choice assertion retains the four ordinary-question limit and separately allows at most one paired-claim challenge. The old 1400 ms speech expectation is replaced by the requested shorter timing. Nine additional unit cases cover the new gates, persistence, exact reactions, alternate entrance, pacing, and text offsets.
 
-
-## Layered voice validation
-
-Six player unit cases cover timed cues, finale settings, cancellation during loading, stale callbacks, decode failure and autoplay refusal. Browser checks validate all 52 scripts and cue ranges, actual MP3 playback, mute stopping the shared track, and the quiet finale. Existing fallback, six viewport and accessibility checks remain. Automated timing checks do not establish subjective voice quality or replace physical-device listening.
