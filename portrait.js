@@ -1,4 +1,4 @@
-// Discrete articulation driven by speech events, never a looping talking GIF.
+// Discrete articulation driven by speech events or recorded waveform energy.
 export function articulation(word) {
   const vowels = (word.match(/[aeiouy]/gi) || []).length;
   return vowels > 1 || word.length > 5 ? 'open' : 'partial';
@@ -19,9 +19,12 @@ export class Portrait {
     if (value && !this.still && this.active) this.pulse('I');
   }
   pulse(word) {
+    this.pulseShape(articulation(word));
+  }
+  pulseLevel(wide) { this.pulseShape(wide ? 'open' : 'partial'); }
+  pulseShape(state) {
     this.clearMouth();
     if (!this.active || !this.speaking || this.still) return;
-    const state = articulation(word);
     this.setFrame(state);
     if (state === 'open') this.timers.push(this.setTimer(() => this.setFrame('partial'), 95));
     this.timers.push(this.setTimer(() => { this.setFrame('closed'); this.timers = []; }, 185));
@@ -39,3 +42,4 @@ export class Portrait {
   }
   suspend() { this.active = false; this.speaking = false; this.clearMouth(); this.clearTimer(this.blinkTimer); }
 }
+

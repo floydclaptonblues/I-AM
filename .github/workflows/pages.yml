@@ -32,6 +32,7 @@ jobs:
           npx playwright install --with-deps chromium
           sudo apt-get install -y ffmpeg
           node scripts/prepare-background.mjs
+          node scripts/prepare-audio.mjs
           npm run test:browser
       - uses: actions/upload-artifact@v4
         if: always()

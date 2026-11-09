@@ -41,16 +41,28 @@ const choose = async (page,id) => {
   }
   await page.locator('[data-question="'+id+'"]').click();
 };
-async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,mock=true,nativeFallback=false}={}) {
-  const context = await browser.newContext({ viewport:{width,height}, reducedMotion:reduced?'reduce':'no-preference' });
+async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,mock=true,nativeFallback=false,mobile=false}={}) {
+  const context = await browser.newContext({ viewport:{width,height}, isMobile:mobile, hasTouch:mobile, reducedMotion:reduced?'reduce':'no-preference' });
   t.after(()=>context.close());
   await context.addInitScript(({conversation,muted,mock,nativeFallback})=>{
     if(nativeFallback) Object.defineProperty(window,'ImageDecoder',{value:undefined,configurable:true});
     if(!localStorage.getItem('i-am.garden.session')) localStorage.setItem('i-am.garden.session',JSON.stringify({version:1,conversation,muted,still:false}));
     if(mock) {
-      window.testUtterances=[]; window.testCancels=0;
-      Object.defineProperty(window,'SpeechSynthesisUtterance',{value:class { constructor(text){this.text=text;} },configurable:true});
-      Object.defineProperty(window,'speechSynthesis',{value:{paused:false,getVoices:()=>[],cancel(){window.testCancels++;},speak(u){window.testUtterances.push(u);},resume(){}},configurable:true});
+      window.testTracks=[];
+      Object.defineProperty(window,'speechSynthesis',{value:{speak(){throw new Error('Device voice must never be used');}},configurable:true});
+      const originalPlay=HTMLMediaElement.prototype.play, originalPause=HTMLMediaElement.prototype.pause;
+      HTMLMediaElement.prototype.play=function(){
+        if(this.id!=='voice-track') return originalPlay.call(this);
+        this.testActive=true;
+        Object.defineProperty(this,'paused',{configurable:true,get:()=>!this.testActive});
+        window.testTracks.push(this);
+        queueMicrotask(()=>{ if(this.testActive) this.dispatchEvent(new Event('playing')); });
+        return Promise.resolve();
+      };
+      HTMLMediaElement.prototype.pause=function(){
+        if(this.id!=='voice-track') return originalPause.call(this);
+        this.testActive=false;
+      };
     }
   },{conversation:savedJourney(route),muted,mock,nativeFallback});
   const page=await context.newPage();
@@ -102,14 +114,15 @@ test('keyboard focus receives one complete answer; speech never replaces or rear
   assert.equal(await page.locator('#question-list [aria-pressed]').count(),0);
   assert.equal(await page.locator('#caption [aria-live]').count(),0);
   const before=await page.locator('#answer-visual').boundingBox();
-  await page.evaluate(()=>{const u=testUtterances.at(-1);u.onstart();u.onboundary({name:'word',charIndex:0,charLength:1});});
-  assert.ok(await page.locator('.spoken-word').count());
+  await page.waitForFunction(()=>testTracks.length>0);
+  await page.evaluate(()=>{const audio=testTracks.at(-1);audio.dispatchEvent(new Event('playing'));});
+  assert.ok(await page.locator('.spoken-sentence').count());
   assert.equal(await page.locator('#answer-visual').textContent(),text);
   assert.equal(await page.locator('#answer-accessible').textContent(),text);
   assert.deepEqual(await page.locator('#answer-visual').boundingBox(),before);
   await page.keyboard.press('Tab'); assert.equal(await page.evaluate(()=>document.activeElement.id),'mute');
   await page.keyboard.press('Enter');
-  await page.evaluate(()=>{const u=testUtterances.at(-1);u.onboundary({name:'word',charIndex:4,charLength:3});u.onend();});
+  assert.equal(await page.locator('#voice-track').evaluate(audio=>audio.paused),true);
   assert.equal(await page.locator('#answer-accessible').textContent(),text);
   assert.equal(await page.locator('.spoken-word').count(),0);
   await audit(page,'answer');
@@ -117,7 +130,8 @@ test('keyboard focus receives one complete answer; speech never replaces or rear
 
 test('speech failure retains the complete answer and releases controls',async t=>{
   const page=await open(t,{muted:false});await choose(page,'garden');await choose(page,'test');
-  await page.evaluate(()=>testUtterances.at(-1).onerror({error:'not-allowed'}));
+  await page.waitForFunction(()=>testTracks.length>0);
+  await page.evaluate(()=>testTracks.at(-1).dispatchEvent(new Event('error')));
   assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='test').text);
   assert.equal(await page.locator('#stop').isDisabled(),true);
 });
@@ -179,11 +193,11 @@ test('Stop, Back and restart clean up an interrupted finale without stale reveal
 test('quiet spoken finale keeps mouth closed; failure and reduced motion release all temporary state',async t=>{
   const page=await open(t,{route:finaleRoute,muted:false,reduced:true});
   await choose(page,'you-darkness');
-  await page.waitForFunction(()=>testUtterances.length>0);
-  const voice=await page.evaluate(()=>{const u=testUtterances.at(-1);u.onstart();u.onboundary({name:'word',charIndex:0,charLength:3});return {rate:u.rate,volume:u.volume};});
+  await page.waitForFunction(()=>testTracks.length>0);
+  const voice=await page.evaluate(()=>{const audio=testTracks.at(-1);audio.dispatchEvent(new Event('playing'));return {rate:audio.playbackRate,volume:audio.volume};});
   assert.deepEqual(voice,{rate:0.85,volume:0.55});
   assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
-  await page.evaluate(()=>testUtterances.at(-1).onerror({error:'synthesis-failed'}));
+  await page.evaluate(()=>testTracks.at(-1).dispatchEvent(new Event('error')));
   assert.equal(await page.locator('body.held-gaze').count(),0);
   assert.equal(await page.locator('body.still').count(),1);
   assert.equal(await page.locator('#question-list').isVisible(),true);
@@ -252,7 +266,7 @@ test('subject menus work with number keys, preserve the answer, and restore afte
   await page.keyboard.press('1');
   assert.equal(await page.locator('#subject-title').textContent(),'The Universe');
   assert.equal(await page.locator('#answer-accessible').textContent(),invitation);
-  assert.equal(await page.evaluate(()=>testUtterances.length),0);
+  assert.equal(await page.evaluate(()=>testTracks.length),0);
   assert.equal(await page.evaluate(()=>document.activeElement.dataset.question),'before-humans');
   await page.reload();
   assert.equal(await page.locator('#subject-title').textContent(),'The Universe');
@@ -268,4 +282,33 @@ test('subject menus work with number keys, preserve the answer, and restore afte
   assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden').text);
   assert.equal(await page.locator('[data-question="test"]').count(),1);
   assert.equal(await page.evaluate(()=>document.activeElement.id),'caption');
+});
+
+
+for (const width of [390,1366]) {
+  test('real David audio plays, stops and replays at width '+width,async t=>{
+    const page=await open(t,{width,height:844,muted:false,mock:false,mobile:width===390});
+    await choose(page,'garden');
+    await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return !a.paused&&a.currentTime>.2;});
+    const source=await page.locator('#voice-track').evaluate(a=>({src:a.currentSrc,voice:a.dataset.voice,duration:a.duration}));
+    assert.match(source.src,/garden-[a-f0-9]+\.mp3$/);assert.equal(source.voice,'microsoft-david');assert.ok(source.duration>2);
+    assert.ok(await page.locator('.spoken-sentence').count());
+    await page.waitForFunction(()=>['partial','open'].includes(document.getElementById('portrait').dataset.mouth));
+    await page.locator('#stop').click();
+    assert.equal(await page.locator('#voice-track').evaluate(a=>a.paused),true);
+    assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
+    await page.locator('#listen').click();
+    await page.waitForFunction(()=>document.getElementById('voice-track').currentTime>.2);
+    await page.locator('#mute').click();
+    assert.equal(await page.locator('#voice-track').evaluate(a=>a.paused),true);
+    assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden').text);
+  });
+}
+test('unavailable recording keeps complete text without selecting a device voice',async t=>{
+  const page=await open(t,{muted:false,mock:false});
+  await page.route('**/assets/audio/*.mp3',route=>route.abort());
+  await choose(page,'garden');
+  await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Voice unavailable.'));
+  assert.equal(await page.locator('#stop').isDisabled(),true);
+  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden').text);
 });

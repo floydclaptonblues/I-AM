@@ -22,6 +22,7 @@ jobs:
         run: |
           sudo apt-get install -y ffmpeg
           node scripts/prepare-background.mjs
+          node scripts/prepare-audio.mjs
       - run: npm run test:browser
       - uses: actions/upload-artifact@v4
         if: always()

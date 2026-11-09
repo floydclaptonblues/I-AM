@@ -1,13 +1,13 @@
 import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=subjects-2';
 import { loadSession, saveSession } from './session.js?v=subjects-2';
-import { Narrator, FirstVisitGreeting } from './speech.js?v=immersion-1';
+import { FirstVisitGreeting } from './speech.js?v=immersion-1';
+import { RecordedNarrator } from './recorded-voice.js?v=david-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
-import { Portrait } from './portrait.js';
+import { Portrait } from './portrait.js?v=david-1';
 import { HeldResponse } from './response.js?v=voice-4';
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-const synth = window.speechSynthesis;
 const saved = loadSession();
 const journey = saved?.journey || new DialogueJourney();
 let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches;
@@ -22,8 +22,7 @@ function focusAnswer() {
   $('caption').focus({ preventScroll: true });
   if (!heldResponse?.active) $('caption').scrollIntoView({ block: 'start', behavior: 'instant' });
 }
-const narrator = new Narrator({
-  synth, Utterance: window.SpeechSynthesisUtterance,
+const narrator = new RecordedNarrator({
   onState(state) {
     const speaking = state === 'speaking';
     document.body.dataset.speaking = String(speaking);
@@ -36,13 +35,9 @@ const narrator = new Narrator({
     heldResponse?.observe(state);
   },
   onSentence(text, index) { answer.sentence(index); },
-  onWord(index, length, text) {
-    const size = length || text.slice(index).match(/^\S+/)?.[0].length || 1;
-    const spokenWord = text.slice(index, index + size);
-    portrait.pulse(spokenWord);
-    answer.word(index, size);
-  }
+  onPulse(wide) { portrait.pulseLevel(wide); }
 });
+narrator.loadCatalog();
 greeting = new FirstVisitGreeting({
   saved: Boolean(saved), muted,
   play: () => narrator.play(opening), remember,
