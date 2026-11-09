@@ -1,4 +1,5 @@
-// Discrete articulation driven by speech events or recorded waveform energy.
+import { mouthPose } from './mouth.js?v=mouth-1';
+// The original poses follow the recording's syllable envelope.
 export function articulation(word) {
   const vowels = (word.match(/[aeiouy]/gi) || []).length;
   return vowels > 1 || word.length > 5 ? 'open' : 'partial';
@@ -7,21 +8,27 @@ export class Portrait {
   constructor({ setFrame, setTimer = (fn, ms) => setTimeout(fn, ms), clearTimer = id => clearTimeout(id), random = Math.random }) {
     Object.assign(this, { setFrame, setTimer, clearTimer, random });
     this.timers = []; this.blinkTimer = null; this.active = false; this.speaking = false; this.still = false;
+    this.mouthState = 'closed';
   }
-  clearMouth() { this.timers.forEach(this.clearTimer); this.timers = []; this.setFrame('closed'); }
+  clearMouth() { this.timers.forEach(this.clearTimer); this.timers = []; this.mouthState = 'closed'; this.setFrame('closed'); }
   start() { this.active = true; this.scheduleBlink(); }
   setStill(value) { this.still = value; this.clearMouth(); this.clearTimer(this.blinkTimer); if (!value) this.scheduleBlink(); }
   setSpeaking(value) {
+    if (this.speaking === value) return;
     this.speaking = value;
     this.clearMouth();
-    // A single conservative onset movement for voices with no word events.
-    // Only real word events cause further mouth movement.
-    if (value && !this.still && this.active) this.pulse('I');
   }
   pulse(word) {
     this.pulseShape(articulation(word));
   }
-  pulseLevel(wide) { this.pulseShape(wide ? 'open' : 'partial'); }
+  setMouthLevel(level) {
+    if (!this.active || !this.speaking || this.still) return;
+    const pose = mouthPose(level, this.mouthState);
+    if (pose === this.mouthState) return;
+    this.timers.forEach(this.clearTimer); this.timers = [];
+    this.mouthState = pose;
+    this.setFrame(pose);
+  }
   pulseShape(state) {
     this.clearMouth();
     if (!this.active || !this.speaking || this.still) return;

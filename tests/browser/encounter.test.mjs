@@ -2,7 +2,7 @@ import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { dialogues, DialogueJourney, opening, subjects } from '../../dialogue.js';
 
@@ -311,4 +311,30 @@ test('unavailable recording keeps complete text without selecting a device voice
   await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Voice unavailable.'));
   assert.equal(await page.locator('#stop').isDisabled(),true);
   assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden').text);
+});
+
+test('mobile jaw follows jumps in audio time, holds vowels, and closes for silence or buffering',async t=>{
+  const page=await open(t,{width:390,height:844,mobile:true,muted:false});
+  await choose(page,'garden');await page.waitForFunction(()=>testTracks.length>0);
+  const manifest=JSON.parse(await readFile(new URL('../../assets/audio/manifest.json',import.meta.url),'utf8'));
+  const clip=manifest.clips.garden,levels=Buffer.from(clip.mouth.levels,'base64');
+  const loud=levels.findIndex(value=>value>210)*clip.mouth.step;
+  const quiet=levels.findIndex((value,i)=>i>10&&value===0&&levels[i-1]===0&&levels[i+1]===0)*clip.mouth.step;
+  assert.ok(loud>0&&quiet>0);
+  const seek=async time=>page.evaluate(time=>{
+    const audio=document.getElementById('voice-track');
+    Object.defineProperty(audio,'currentTime',{value:time,writable:true,configurable:true});
+    audio.dispatchEvent(new Event('timeupdate'));
+  },time);
+  await seek(loud);assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'open');
+  await page.waitForTimeout(260);
+  assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'open','No fixed flap timer closes a held sound');
+  await seek(quiet);assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
+  await seek(loud);
+  await page.locator('#voice-track').evaluate(audio=>audio.dispatchEvent(new Event('waiting')));
+  assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
+  await page.locator('#voice-track').evaluate(audio=>audio.dispatchEvent(new Event('playing')));
+  assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'open');
+  await page.locator('#stop').click();
+  assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
 });

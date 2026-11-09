@@ -8,26 +8,27 @@ import { opening, dialogues } from '../dialogue.js';
 import { sentenceRanges } from '../answer.js';
 
 const text='Who are you? I was here.';
+const samples=new Uint8Array(200);samples.fill(64,0,20);samples.fill(255,25,40);samples.fill(128,100,140);
 const clip={text,src:'assets/audio/test-abc.mp3',duration:4,
   sentences:[{time:0,end:1.5,text:'Who are you?'},{time:2,end:4,text:'I was here.'}],
-  pulses:[{time:0,wide:false},{time:.5,wide:true},{time:2,wide:false}]};
+  mouth:{step:.02,levels:Buffer.from(samples).toString('base64')}};
 function setup({fetch,play}={}) {
-  const states=[],pulses=[],sentences=[],timers=new Map(),frames=new Map();let id=0;
+  const states=[],levels=[],sentences=[],timers=new Map(),frames=new Map();let id=0;
   const audio={dataset:{},paused:true,ended:false,currentTime:0,volume:1,playbackRate:1,
     pause(){this.paused=true;},load(){},removeAttribute(){delete this.src;},
     play(){this.paused=false;if(play)return play(this);this.onplaying?.();return Promise.resolve();}};
   const narrator=new RecordedNarrator({createAudio:()=>audio,
-    fetch:fetch||(async()=>({ok:true,json:async()=>({version:2,clips:{test:clip}})})),
-    onState:state=>states.push(state),onSentence:(...args)=>sentences.push(args),onPulse:pulse=>pulses.push(pulse),
+    fetch:fetch||(async()=>({ok:true,json:async()=>({version:3,clips:{test:clip}})})),
+    onState:state=>states.push(state),onSentence:(...args)=>sentences.push(args),onMouth:level=>levels.push(level),
     setTimer:(fn,ms)=>{timers.set(++id,{fn,ms});return id;},clearTimer:id=>timers.delete(id),
     requestFrame:fn=>{frames.set(++id,fn);return id;},cancelFrame:id=>frames.delete(id)});
-  return {narrator,audio,states,pulses,sentences,timers,frames};
+  return {narrator,audio,states,levels,sentences,timers,frames};
 }
 test('same David recording drives sentence and waveform cues from the media clock',async()=>{
   const s=setup();await s.narrator.play(text);
   assert.equal(s.audio.src,clip.src);assert.equal(s.audio.dataset.voice,'microsoft-david');
-  assert.deepEqual(s.pulses,[false]);
-  s.audio.currentTime=.53;s.audio.ontimeupdate();assert.deepEqual(s.pulses,[false,true]);
+  assert.equal(s.levels.at(-1),64/255);
+  s.audio.currentTime=.53;s.audio.ontimeupdate();assert.equal(s.levels.at(-1),1);
   s.audio.currentTime=1.7;s.audio.ontimeupdate();assert.equal(s.states.at(-1),'between');
   s.audio.currentTime=2.1;s.audio.ontimeupdate();assert.equal(s.sentences.at(-1)[1],1);
 });
@@ -39,7 +40,7 @@ test('quiet finale preserves pitch while slowing, then replay restores ordinary 
 test('Stop while catalog loads cannot start delayed audio',async()=>{
   let resolve;const s=setup({fetch:()=>new Promise(done=>{resolve=done;})});
   const pending=s.narrator.play(text);s.narrator.stop();
-  resolve({ok:true,json:async()=>({version:2,clips:{test:clip}})});await pending;
+  resolve({ok:true,json:async()=>({version:3,clips:{test:clip}})});await pending;
   assert.equal(s.audio.src,undefined);assert.equal(s.audio.paused,true);
 });
 test('Stop and answer switching invalidate callbacks and pending play rejection',async()=>{
@@ -54,8 +55,8 @@ test('Stop and answer switching invalidate callbacks and pending play rejection'
 });
 test('buffering stops mouth cues, retains loading state, and resumes on the media clock',async()=>{
   const s=setup();await s.narrator.play(text);s.audio.onwaiting();
-  s.audio.currentTime=.5;s.audio.ontimeupdate();assert.equal(s.states.at(-1),'loading');assert.equal(s.pulses.length,1);
-  s.audio.onplaying();assert.equal(s.states.at(-1),'speaking');assert.deepEqual(s.pulses,[false,true]);
+  s.audio.currentTime=.5;s.audio.ontimeupdate();assert.equal(s.states.at(-1),'loading');assert.equal(s.levels.at(-1),0);
+  s.audio.onplaying();assert.equal(s.states.at(-1),'speaking');assert.equal(s.levels.at(-1),1);
 });
 test('network, missing recording, autoplay and decoder failures release controls without substituting a device voice',async()=>{
   for(const s of [setup({fetch:async()=>({ok:false})}),setup({play:()=>Promise.reject(new Error('Decode'))}),
@@ -67,7 +68,7 @@ test('network, missing recording, autoplay and decoder failures release controls
 });
 test('every current answer has a matching hashed lossless recording and bounded sentence/audio cues',()=>{
   const manifest=JSON.parse(readFileSync(new URL('../assets/audio/manifest.json',import.meta.url),'utf8'));
-  assert.equal(manifest.version,2);assert.equal(manifest.voice,'Microsoft David Desktop');assert.equal(manifest.sapiPitch,-6);
+  assert.equal(manifest.version,3);assert.equal(manifest.voice,'Microsoft David Desktop');assert.equal(manifest.sapiPitch,-6);
   const entries=[{id:'opening',text:opening},...dialogues];
   assert.equal(Object.keys(manifest.clips).length,entries.length);
   for(const entry of entries) {
@@ -79,7 +80,23 @@ test('every current answer has a matching hashed lossless recording and bounded 
     assert.ok(name.endsWith(createHash('sha256').update(wav).digest('hex').slice(0,12)));
     assert.ok(Math.abs((wav.length-44)/44100-clip.duration)<.001);
     assert.ok(clip.sentences.every((s,i)=>s.time>=0&&s.end>s.time&&s.end<=clip.duration+.001&&(!i||s.time>=clip.sentences[i-1].end)));
-    assert.ok(clip.pulses.length>0);
-    assert.ok(clip.pulses.every((p,i)=>p.time>=0&&p.time<clip.duration&&(!i||p.time>clip.pulses[i-1].time)));
+    const envelope=Buffer.from(clip.mouth.levels,'base64');
+    assert.equal(clip.mouth.step,.02);
+    assert.ok(Math.abs(envelope.length*.02-clip.duration)<.021);
+    assert.ok(envelope.some(value=>value>0));
+    for(let i=0;i<clip.sentences.length-1;i++) {
+      const middle=(clip.sentences[i].end+clip.sentences[i+1].time)/2;
+      assert.equal(envelope[Math.floor(middle/.02)],0,entry.id+' silence closes mouth');
+    }
   }
+});
+
+test('delayed animation frames jump to the current sound and close during within-sentence silence',async()=>{
+  const s=setup();await s.narrator.play(text,{rate:.85});
+  s.audio.currentTime=.6;s.audio.ontimeupdate();assert.equal(s.levels.at(-1),1);
+  s.audio.currentTime=1.1;s.audio.ontimeupdate();assert.equal(s.levels.at(-1),0);
+  s.audio.currentTime=2.1;s.audio.ontimeupdate();assert.equal(s.levels.at(-1),128/255);
+  s.audio.onwaiting();assert.equal(s.levels.at(-1),0);
+  s.audio.currentTime=2.4;s.audio.onplaying();assert.equal(s.levels.at(-1),128/255);
+  s.narrator.stop();assert.equal(s.levels.at(-1),0);
 });

@@ -1,10 +1,11 @@
 // Every device plays the same approved David recording. Sentence cues and
-// waveform mouth pulses follow the media clock, including buffering and replay.
+// mouth envelope follows the media clock, including buffering and replay.
+import { mouthLevelAt } from './mouth.js?v=mouth-1';
 export class RecordedNarrator {
   constructor(options = {}) {
     this.onState = options.onState || (() => {});
     this.onSentence = options.onSentence || (() => {});
-    this.onPulse = options.onPulse || (() => {});
+    this.onMouth = options.onMouth || (() => {});
     this.setTimer = options.setTimer || ((fn,ms) => setTimeout(fn,ms));
     this.clearTimer = options.clearTimer || (id => clearTimeout(id));
     this.requestFrame = options.requestFrame || (fn => requestAnimationFrame(fn));
@@ -24,11 +25,16 @@ export class RecordedNarrator {
       const controller = new AbortController();
       const timeout = this.setTimer(() => controller.abort(),8000);
       try {
-        const response = await this.fetch('assets/audio/manifest.json?v=david-1',{signal:controller.signal});
+        const response = await this.fetch('assets/audio/manifest.json?v=mouth-1',{signal:controller.signal});
         if (!response.ok) throw new Error('Voice catalog unavailable');
         const manifest = await response.json();
-        if (manifest.version !== 2 || !manifest.clips) throw new Error('Invalid voice catalog');
-        this.readyCatalog = new Map(Object.values(manifest.clips).map(clip => [clip.text,clip]));
+        if (manifest.version !== 3 || !manifest.clips) throw new Error('Invalid voice catalog');
+        this.readyCatalog = new Map(Object.values(manifest.clips).map(clip => {
+          if (clip.mouth?.step !== .02 || typeof clip.mouth.levels !== 'string') throw new Error('Missing mouth timing');
+          const samples = Uint8Array.from(atob(clip.mouth.levels), char => char.charCodeAt(0));
+          if (Math.abs(samples.length*clip.mouth.step-clip.duration) > .021) throw new Error('Mouth timing length mismatch');
+          return [clip.text,{...clip,mouth:{step:clip.mouth.step,samples}}];
+        }));
         return this.readyCatalog;
       } catch { this.catalog = null; return null; }
       finally { this.clearTimer(timeout); }
@@ -41,6 +47,7 @@ export class RecordedNarrator {
     for (const event of ['playing','ended','error','pause','waiting','timeupdate']) this.audio['on'+event] = null;
     this.audio.pause();
     this.audio.removeAttribute('src'); this.audio.load();
+    this.onMouth(0);
   }
   stop(state = 'idle') {
     this.generation++;
@@ -56,7 +63,7 @@ export class RecordedNarrator {
     if (!valid()) return;
     const clip = catalog?.get(text);
     if (!clip || !/^assets\/audio\/[a-z0-9-]+\.mp3$/.test(clip.src)
-      || !Array.isArray(clip.pulses) || !Array.isArray(clip.sentences) || !(clip.duration>0)) {
+      || !clip.mouth?.samples || !Array.isArray(clip.sentences) || !(clip.duration>0)) {
       this.stop('unavailable'); return;
     }
     this.audio.dataset.voice = 'microsoft-david';
@@ -65,7 +72,7 @@ export class RecordedNarrator {
     this.audio.playbackRate = rate;
     this.audio.preservesPitch = true;
     this.audio.volume = Math.min(1,Math.max(0,options.volume ?? 1));
-    let sentenceIndex = -1, pulseIndex = -1, state = '', buffering = true;
+    let sentenceIndex = -1, state = '', buffering = true;
     const setState = next => { if (state !== next) { state = next; this.onState(next); } };
     const update = () => {
       if (!valid() || this.audio.paused || buffering) return;
@@ -78,12 +85,7 @@ export class RecordedNarrator {
         this.onSentence(sentence.text,index,clip.sentences.length);
       }
       setState(time < sentence.end ? 'speaking' : 'between');
-      const nextPulse = clip.pulses.findLastIndex(pulse => pulse.time <= time);
-      if (nextPulse >= 0 && nextPulse !== pulseIndex) {
-        pulseIndex = nextPulse;
-        const pulse = clip.pulses[nextPulse];
-        if (time - pulse.time < .14 && time < sentence.end) this.onPulse(pulse.wide);
-      }
+      this.onMouth(time < sentence.end ? mouthLevelAt(clip.mouth,time) : 0);
     };
     const tick = () => { if (valid()) { update(); this.frame = this.requestFrame(tick); } };
     const fail = () => { if (valid()) this.stop('unavailable'); };
@@ -98,9 +100,9 @@ export class RecordedNarrator {
     };
     this.audio.onwaiting = () => {
       if (!valid()) return;
-      buffering = true; setState('loading'); watchdog(12000);
+      buffering = true; this.onMouth(0); setState('loading'); watchdog(12000);
     };
-    this.audio.onpause = () => { if (valid() && !this.audio.ended) setState('paused'); };
+    this.audio.onpause = () => { if (valid() && !this.audio.ended) { this.onMouth(0); setState('paused'); } };
     this.audio.ontimeupdate = update;
     this.audio.onended = () => { if (valid()) this.stop('finished'); };
     this.audio.onerror = fail;

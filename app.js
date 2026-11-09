@@ -1,10 +1,10 @@
 import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=subjects-2';
 import { loadSession, saveSession } from './session.js?v=subjects-2';
 import { FirstVisitGreeting } from './speech.js?v=immersion-1';
-import { RecordedNarrator } from './recorded-voice.js?v=david-1';
+import { RecordedNarrator } from './recorded-voice.js?v=mouth-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
-import { Portrait } from './portrait.js?v=david-1';
+import { Portrait } from './portrait.js?v=mouth-1';
 import { HeldResponse } from './response.js?v=voice-4';
 const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -35,7 +35,7 @@ const narrator = new RecordedNarrator({
     heldResponse?.observe(state);
   },
   onSentence(text, index) { answer.sentence(index); },
-  onPulse(wide) { portrait.pulseLevel(wide); }
+  onMouth(level) { portrait.setMouthLevel(level); }
 });
 narrator.loadCatalog();
 greeting = new FirstVisitGreeting({
