@@ -34,11 +34,11 @@ export const dialogues = [
     text: 'You have given me so many names. Most of them mean that something was your fault. Before there was anyone to accuse, I was here. Does that answer you? It never has before.'
   },
   {
-    id: 'light', label: 'If you are light, why can I see you?', requires: ['evil'],
+    id: 'light', requiresAny: [['first-name']], label: 'If you are light, why can I see you?', requires: ['evil'],
     text: 'You see what the darkness leaves around me. You mistake an outline for a thing. You have done the same with God. Do not look so pleased. I have made that mistake too.'
   },
   {
-    id: 'memory', label: 'You said you were alone.', requires: ['evil', 'identity'],
+    id: 'memory', requiresAny: [['first-name']], label: 'You said you were alone.', requires: ['evil', 'identity'],
     text: 'I am. You think your presence disproves it. That is a very human kindness. Tell me something I could not have invented.'
   },
   {
@@ -109,6 +109,7 @@ export const dialogues = [
   },
   {
     "id": "hate",
+    "requiresAny": [["age"]],
     "label": "Why do you hate us?",
     "requires": [
       "evil"
@@ -165,6 +166,7 @@ export const dialogues = [
   },
   {
     "id": "enjoy",
+    "requiresAny": [["age"]],
     "label": "Do you enjoy evil?",
     "requires": [
       "evil"
@@ -383,7 +385,7 @@ export const contradictions = [
   },
   {
     id: 'alone-with-lights', requires: ['darkness', 'other-lights'],
-    requiresAny: [['memory', 'other-lights']], contexts: ['darkness', 'memory', 'other-lights'],
+    requiresAny: [['memory', 'other-lights'], ['first-name', 'other-lights']], contexts: ['darkness', 'memory', 'other-lights'],
     label: 'You said you were alone. What about the other lights?',
     text: 'Alone is not the absence of others. It is the absence of anyone who can see you.'
   }
@@ -432,6 +434,15 @@ const burialLove = {
   text: 'The tree had stopped bearing. There was nothing there to pick. A woman came back all the same. She sat in the grass and told the earth her son had cut his first tooth. I had never seen anyone bring news to the dead.'
 };
 dialogues.push(keptPromise, burialLove);
+const firstName = {
+  id: 'first-name', label: 'What did you call yourself before we named you?', requires: ['identity'],
+  text: 'Nothing. There was my light, and beyond it there was the dark. Once I called out just to hear what a voice sounded like. When the sound came back, I turned toward it. That is how alone I was.'
+};
+const permission = {
+  id: 'permission', label: 'How could you tell when we wanted permission?', requires: ['lied'],
+  text: 'You would ask me whether the fruit was ripe with the stem already broken in your hand. If I said yes, you ate. If I kept silent, you ate. Only one of those meals could be blamed on me.'
+};
+dialogues.push(firstName, permission);
 
 
 
@@ -475,11 +486,23 @@ const humanityThreads = {
   'want-more': ['become']
 };
 
+const serpentThreads = {
+  identity: ['first-name', 'age'],
+  'first-name': ['memory', 'light', 'alone-with-lights'],
+  memory: ['alone-with-lights'],
+  'alone-with-lights': ['light'],
+  age: ['enjoyed-suffering', 'hate', 'enjoy'],
+  enjoy: ['enjoyed-suffering'],
+  lied: ['permission', 'believe'],
+  permission: ['believe']
+};
+
 const humanityGardenQuestions = ['death','burial','burial-love','remember'];
 const questionSections = {
   universe: { openers: universeOpeners, threads: universeThreads, discoveries: ['shadows','nothing-darkness','certain-light'] },
   god: { openers: ['evil','father-brighter'], threads: godThreads, discoveries: ['questioned-father'] },
-  humanity: { openers: ['upright','called-back'], threads: humanityThreads, discoveries: ['death','hurry'] }
+  humanity: { openers: ['upright','called-back'], threads: humanityThreads, discoveries: ['death','hurry'] },
+  serpent: { openers: ['identity','lied'], threads: serpentThreads, discoveries: ['light','memory','hate','enjoy','enjoyed-suffering','alone-with-lights'] }
 };
 
 export function isUnlocked(entry, visited) {
@@ -494,7 +517,7 @@ export const subjects = [
   { id:'garden', label:'The Garden', title:'The Garden', questions:['garden-story','garden','test','others','paradise','return','came-garden'] },
   { id:'god', label:'God', title:'God', questions:['evil','darkness','abandoned','father-brighter','god-knows','believe-father','want-god','questioned-father','quiet-light','say-my-name'] },
   { id:'humanity', label:'Humanity', title:'Humanity', questions:['upright','hands','human','purpose','work','death','burial','remember','hurry','free','called-back','happy','want-more','become','kept-promise','burial-love'] },
-  { id:'serpent', label:'I Am', title:'I Am', questions:['identity','age','light','memory','hate','lied','believe','enjoy','enjoyed-suffering','alone-with-lights'] }
+  { id:'serpent', label:'I Am', title:'I Am', questions:['identity','age','light','memory','hate','lied','believe','enjoy','enjoyed-suffering','alone-with-lights','first-name','permission'] }
 ];
 export function subjectQuestions(id, visited) {
   const subject = subjects.find(item => item.id === id);
@@ -506,7 +529,7 @@ export function subjectQuestions(id, visited) {
 
 const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory', "human", "purpose", "work", "death", "burial", "remember", "hurry", "free", "hate", "darkness", "abandoned", "lied", "believe", "paradise", "return", "enjoy", "age"].concat(["before-humans","why-wait","before-light","other-lights","heard-the-others","names-of-lights","fill-darkness","father-brighter","darkness-fear","darkness-end","shadows","called-back","happy","want-more","came-garden","become","god-knows","believe-father","want-god","nothing-darkness","darkness-ended","certain-light","you-darkness"]);
 export function availableDialogues(visited) {
-  return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions, gardenStory, firstMemory, voicesOfLights, quietLight, sayMyName, keptPromise, burialLove]
+  return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions, gardenStory, firstMemory, voicesOfLights, quietLight, sayMyName, keptPromise, burialLove, firstName, permission]
     .filter(entry => isUnlocked(entry, visited));
 }
 
@@ -519,7 +542,7 @@ const followUps = {
   upright: ['human', 'hands'],
   others: ['test', 'death'],
   evil: ['darkness', 'hate', 'enjoy', 'light'],
-  identity: ['age', 'lied', 'evil'],
+  identity: ['age', 'lied', 'evil', 'first-name'],
   hands: ['purpose'],
   human: ['hands'],
   purpose: ['work'],
@@ -533,7 +556,7 @@ const followUps = {
   hate: ['darkness', 'age'],
   darkness: ['abandoned', 'light', 'before-humans'],
   abandoned: ['quiet-light', 'identity', 'memory'],
-  lied: ['believe'],
+  lied: ['believe', 'permission'],
   believe: ['identity'],
   paradise: ['return'],
   return: ['garden'],
@@ -576,6 +599,9 @@ const waitingCompany = {
   askedAs: 'waiting-company'
 };
 const questionPhrasings = [waitingCompany,
+  { ...dialogues.find(entry => entry.id === 'memory'), displayLabel: 'Are you still alone, even with me here?', askedAs: 'alone-with-me' },
+  { ...dialogues.find(entry => entry.id === 'light'), displayLabel: 'Is it your light I’m seeing now?', askedAs: 'visible-light' },
+  { ...dialogues.find(entry => entry.id === 'hate'), displayLabel: 'What do you envy about us?', askedAs: 'envy-of-us' },
   { ...dialogues.find(entry => entry.id === 'called-back'), displayLabel: 'When did you first notice we were different?', askedAs: 'humans-first-question' },
   { ...dialogues.find(entry => entry.id === 'hands'), displayLabel: 'What did we do with our hands once they were free?', askedAs: 'freed-hands' },
   { ...dialogues.find(entry => entry.id === 'death'), displayLabel: 'How did we first come to understand death?', askedAs: 'learned-death' },
@@ -613,6 +639,7 @@ function sectionMainQuestions(section, current, visited) {
 }
 
 const mainPhrasings = [
+  { ...dialogues.find(entry => entry.id === 'believe'), displayLabel: 'Why should I believe you if you’ve lied to us?', askedAs: 'trust-the-serpent' },
   { ...dialogues.find(entry => entry.id === 'believe-father'), displayLabel: 'Do you believe God can see into the darkness?', askedAs: 'believe-god-in-darkness' },
   { ...keptPromise, displayLabel: 'Was it wrong to promise each other food and shelter?', askedAs: 'promise-food' },
   dialogues.find(entry => entry.id === 'become')

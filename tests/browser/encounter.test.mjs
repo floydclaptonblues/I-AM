@@ -139,7 +139,7 @@ test('speech failure retains the complete answer and releases controls',async t=
   assert.equal(await page.locator('#stop').isDisabled(),true);
 });
 
-test('contradictions appear only after both claims, persist, and use subdued revisited typography',async t=>{
+test('a challenge appears after both claims and stays in Review once asked',async t=>{
   const page=await open(t,{route:['evil','darkness','before-humans','why-wait']});
   assert.equal(await page.locator('[data-question="alone-with-lights"]').count(),0);
   await choose(page,'other-lights');await choose(page,'alone-with-lights');
@@ -150,9 +150,10 @@ test('contradictions appear only after both claims, persist, and use subdued rev
   await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
   await page.locator('[data-subject="serpent"]').click();
   const challenge=page.locator('[data-question="alone-with-lights"]');
-  assert.equal(await challenge.getAttribute('data-visited'),'true');
-  assert.equal(await challenge.locator('span').last().evaluate(el=>getComputedStyle(el).fontStyle),'italic');
-  await challenge.click();assert.equal(await page.locator('#answer-accessible').textContent(),answer);
+  assert.equal(await challenge.count(),0);
+  await page.locator('.utilities summary').click();
+  await page.locator('#review').click();
+  assert.ok((await page.locator('#history').innerText()).includes(answer));
 });
 
 test('muted finale keeps face and response together, freezes the displayed frame, and reveals after silence',async t=>{
@@ -441,4 +442,24 @@ test('Humanity returns to its remaining questions with the last reply and record
   assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
   assert.ok((await list()).includes('hurry'));
   assert.equal(await page.locator('[data-question="kept-promise"]').count(),0);
+});
+
+test('I Am follows names and permission, plays both new recordings, and keeps unasked forks', async t=>{
+  const page=await open(t,{width:390,height:844,mobile:true,muted:false,mock:false});
+  const ask=name=>page.getByRole('button',{name,exact:true}).click();
+  const list=()=>page.locator('#question-list [data-question]').evaluateAll(nodes=>nodes.map(n=>n.dataset.question));
+  await ask('I Am'); await ask('Who are you?'); await ask('What did you call yourself before we named you?');
+  await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/first-name-')&&a.currentTime>.15;});
+  await ask('Are you still alone, even with me here?');
+  assert.match(await page.locator('#answer-accessible').textContent(),/Tell me something I could not have invented/);
+  assert.deepEqual(await list(),['lied','age','light']);
+  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
+  await page.reload(); assert.deepEqual(await list(),['lied','age','light']);
+  await ask('Go back to the previous questions'); assert.deepEqual(await list(),['light']);
+  await ask('Ask about something else'); await ask('I Am');
+  await ask('Have you ever lied to us?'); await ask('How could you tell when we wanted permission?');
+  await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/permission-')&&a.currentTime>.15;});
+  await ask('Then why should we believe you?');
+  assert.deepEqual(await list(),['age','light']);
+  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
 });
