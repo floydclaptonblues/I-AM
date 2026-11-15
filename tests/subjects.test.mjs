@@ -67,3 +67,17 @@ test('all exchanges are reachable through subjects while late revelations remain
   assert.equal(journey.visited.size,dialogues.length);
   assert.ok(new DialogueJourney().restore(journey.snapshot()));
 });
+
+test('after every answer the follow-up menu contains only questions from its own category', () => {
+  const journey = new DialogueJourney();
+  for (const entry of dialogues) journey.visited.add(entry.id);
+  for (const subject of subjects) {
+    for (const id of subject.questions) {
+      journey.selectSubject(subject.id);
+      assert.ok(journey.choose(id));
+      assert.equal(journey.menuSubject.id,subject.id);
+      const expected = journey.choices.filter(entry => subject.questions.includes(entry.id));
+      assert.deepEqual(journey.menuChoices.map(entry => entry.id),expected.map(entry => entry.id));
+    }
+  }
+});

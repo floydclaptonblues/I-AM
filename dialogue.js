@@ -531,10 +531,16 @@ export class DialogueJourney {
   }
   get choices() { return relatedDialogues(this.browsing ? 'opening' : this.current.id, this.visited).filter(entry => entry.id !== this.current.id); }
   get showingSubjects() { return (this.current.id === 'opening' || this.browsing) && !this.subject; }
+  get menuSubject() {
+    if (this.showingSubjects) return null;
+    if (this.subject) return subjects.find(subject => subject.id === this.subject);
+    return subjects.find(subject => subject.questions.includes(this.current.id));
+  }
   get menuChoices() {
     if (this.showingSubjects) return subjects.map(subject => ({...subject, kind:'subject'}));
     if (this.subject) return subjectQuestions(this.subject, this.visited).filter(entry => entry.id !== this.current.id);
-    return this.choices;
+    const subject = this.menuSubject;
+    return this.choices.filter(entry => subject.questions.includes(entry.id));
   }
   selectSubject(id) {
     if (!subjects.some(subject => subject.id === id)) return false;

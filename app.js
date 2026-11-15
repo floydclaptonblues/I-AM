@@ -1,5 +1,5 @@
-import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=heard-1';
-import { loadSession, saveSession } from './session.js?v=heard-1';
+import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=category-1';
+import { loadSession, saveSession } from './session.js?v=category-1';
 import { FirstVisitGreeting } from './speech.js?v=immersion-1';
 import { RecordedNarrator } from './recorded-voice.js?v=heard-1';
 import { AnswerView } from './answer.js?v=immersion-1';
@@ -94,10 +94,11 @@ function renderChoices({ focus = false, focusId = null } = {}) {
     button.append(number,label); button.addEventListener('click',()=>choose(entry)); li.append(button); fragment.append(li);
   });
   $('question-list').replaceChildren(fragment);
-  const selectedSubject = subjects.find(subject => subject.id === journey.subject);
-  $('subject-title').hidden = !selectedSubject;
-  $('subject-title').textContent = selectedSubject?.title || '';
-  $('questions').setAttribute('aria-label', selectedSubject ? 'Questions about ' + selectedSubject.title : journey.showingSubjects ? 'Subjects to ask the serpent about' : 'Questions for the serpent');
+  const selectedSubject = Boolean(journey.subject);
+  const menuSubject = journey.menuSubject;
+  $('subject-title').hidden = !menuSubject;
+  $('subject-title').textContent = menuSubject?.title || '';
+  $('questions').setAttribute('aria-label', menuSubject ? 'Questions about ' + menuSubject.title : 'Subjects to ask the serpent about');
   $('question-navigation').hidden = !journey.canGoBack && !selectedSubject;
   $('back-questions').hidden = journey.showingSubjects;
   $('back-questions').setAttribute('aria-label', selectedSubject ? 'Return to subjects' : 'Go back to the previous questions');

@@ -37,6 +37,9 @@ const finaleRoute=['identity','age','before-humans','why-wait','before-light','f
 const choose = async (page,id) => {
   if (!await page.locator('[data-question="'+id+'"]').count()) {
     const subject = subjects.find(subject => subject.questions.includes(id));
+    if (!await page.locator('[data-subject="'+subject.id+'"]').count()) {
+      await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
+    }
     await page.locator('[data-subject="'+subject.id+'"]').click();
   }
   await page.locator('[data-question="'+id+'"]').click();
@@ -143,6 +146,9 @@ test('contradictions appear only after both claims, persist, and use subdued rev
   const answer=await page.locator('#answer-accessible').textContent();
   await page.reload();assert.equal(await page.locator('#answer-accessible').textContent(),answer);
   await page.locator('#back-questions').click();
+  assert.equal(await page.locator('[data-question="alone-with-lights"]').count(),0);
+  await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
+  await page.locator('[data-subject="serpent"]').click();
   const challenge=page.locator('[data-question="alone-with-lights"]');
   assert.equal(await challenge.getAttribute('data-visited'),'true');
   assert.equal(await challenge.locator('span').last().evaluate(el=>getComputedStyle(el).fontStyle),'italic');
@@ -242,14 +248,18 @@ test('visitors can change subjects without losing the answer or conversation', a
   await page.reload();
   assert.equal(await page.locator('#answer-accessible').textContent(),previous);
   await page.getByRole('button',{name:'Return to follow-up questions',exact:true}).click();
-  assert.equal(await page.locator('[data-question="death"]').count(),1);
+  assert.equal(await page.locator('#subject-title').textContent(),'The Garden');
+  assert.equal(await page.locator('[data-question="death"]').count(),0);
+  assert.equal(await page.locator('[data-question="others"]').count(),1);
   await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
   await choose(page,'before-humans');
   assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='before-humans').text);
   assert.equal(await page.evaluate(()=>document.activeElement.id),'caption');
   await page.getByRole('button',{name:'Go back to the previous questions',exact:true}).click();
   assert.equal(await page.locator('#answer-accessible').textContent(),previous);
-  assert.equal(await page.locator('[data-question="death"]').count(),1);
+  assert.equal(await page.locator('#subject-title').textContent(),'The Garden');
+  assert.equal(await page.locator('[data-question="death"]').count(),0);
+  assert.equal(await page.locator('[data-question="others"]').count(),1);
   const focusBounds=await page.evaluate(()=>({
     question:document.activeElement.getBoundingClientRect().top,
     portrait:document.querySelector('.upper-deck').getBoundingClientRect().bottom
