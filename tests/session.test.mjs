@@ -9,7 +9,7 @@ function memory() {
 }
 function walk() {
   const journey = new DialogueJourney();
-  for (const id of ['upright', 'hands', 'purpose', 'work']) assert.ok(journey.choose(id));
+  for (const id of ['upright', 'hands', 'purpose', 'work']) { journey.selectSubject('humanity'); assert.ok(journey.choose(id)); }
   return journey;
 }
 
@@ -19,19 +19,19 @@ test('a return restores the answer, choices, Back trail, transcript, and prefere
   assert.ok(saveSession(journey, { muted: true, still: true }, () => storage));
   const saved = loadSession(() => storage);
   assert.equal(saved.journey.current.id, 'purpose');
-  assert.deepEqual(saved.journey.choices.map(d => d.id), ['work']);
+  assert.equal(saved.journey.menuChoices.length,5);
   assert.deepEqual(saved.journey.transcript, journey.transcript);
   assert.ok(saved.journey.visited.has('work'));
   assert.equal(saved.muted, true); assert.equal(saved.still, true);
   saved.journey.back(); assert.equal(saved.journey.current.id, 'hands');
 });
 
-test('First Questions survives a return without erasing history or unlocks', () => {
-  const journey = walk(), storage = memory(); journey.firstQuestions();
+test('The selected section survives a return without erasing history or unlocks', () => {
+  const journey = walk(), storage = memory(); journey.selectSubject('humanity');
   saveSession(journey, {}, () => storage);
   const restored = loadSession(() => storage).journey;
-  assert.equal(restored.current.id, 'opening');
-  assert.equal(restored.canGoBack, false);
+  assert.equal(restored.current.id, 'work');
+  assert.equal(restored.subject, 'humanity');
   assert.equal(restored.history.length, 4);
   assert.equal(restored.visited.size, 4);
 });
@@ -45,13 +45,13 @@ test('Start Over clears saved history and unlocks while retaining preferences af
   assert.equal(restored.journey.canGoBack, false);
   assert.equal(restored.journey.visited.size, 0);
   assert.equal(restored.journey.transcript.length, 1);
-  assert.equal(restored.journey.choices.length, 6);
+  assert.equal(restored.journey.menuChoices.length, 5);
   assert.equal(restored.muted, true); assert.equal(restored.still, true);
 });
 
 test('missing, corrupt, outdated, and invalid saved data safely produce a fresh visit', () => {
   const storage = memory(); assert.equal(loadSession(() => storage), null);
-  for (const raw of ['broken JSON', 'null', '{"version":2}', JSON.stringify({version:1, conversation:{trail:['opening','missing'],history:['missing']}}), JSON.stringify({version:1, conversation:{trail:['opening','work'],history:['work']}}), JSON.stringify({version:1, conversation:{trail:['opening','garden','hands'],history:['garden','hands']}})]) {
+  for (const raw of ['broken JSON', 'null', '{"version":2}', JSON.stringify({version:1, conversation:{trail:['opening','missing'],history:['missing']}}), JSON.stringify({version:1, conversation:{trail:['opening','work'],history:[]}}), JSON.stringify({version:1, conversation:{trail:['opening','garden','hands'],history:['hands','garden']}})]) {
     storage.setItem(SAVE_KEY, raw); assert.equal(loadSession(() => storage), null);
   }
 });

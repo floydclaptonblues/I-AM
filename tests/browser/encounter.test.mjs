@@ -28,21 +28,16 @@ function savedJourney(route=[]) {
   const journey = new DialogueJourney();
   for(const id of route) {
     if(id==='BACK') journey.back();
-    else if(id==='FIRST') journey.firstQuestions();
-    else assert.ok(journey.choose(id), 'Invalid test route: '+id);
+    
+    else { journey.selectSubject(subjects.find(s=>s.questions.includes(id)).id); assert.ok(journey.choose(id)); }
   }
   return journey.snapshot();
 }
 const finaleRoute=['identity','age','before-humans','why-wait','before-light','father-brighter','god-knows','believe-father','want-god','fill-darkness','darkness-end','nothing-darkness','darkness-ended','called-back','happy','certain-light'];
 const choose = async (page,id) => {
-  if (!await page.locator('[data-question="'+id+'"]').count()) {
-    const subject = subjects.find(subject => subject.questions.includes(id));
-    if (!await page.locator('[data-subject="'+subject.id+'"]').count()) {
-      await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
-    }
-    await page.locator('[data-subject="'+subject.id+'"]').click();
-  }
-  await page.locator('[data-question="'+id+'"]').click();
+  const subject=subjects.find(item=>item.questions.includes(id));
+  await page.locator('[data-subject="'+subject.id+'"]').click();
+  if (id!=='garden-story') await page.locator('[data-question="'+id+'"]').click();
 };
 async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,mock=true,nativeFallback=false,mobile=false}={}) {
   const context = await browser.newContext({ viewport:{width,height}, isMobile:mobile, hasTouch:mobile, reducedMotion:reduced?'reduce':'no-preference' });
@@ -139,21 +134,12 @@ test('speech failure retains the complete answer and releases controls',async t=
   assert.equal(await page.locator('#stop').isDisabled(),true);
 });
 
-test('a challenge appears after both claims and stays in Review once asked',async t=>{
-  const page=await open(t,{route:['evil','darkness','before-humans','why-wait']});
-  assert.equal(await page.locator('[data-question="alone-with-lights"]').count(),0);
-  await choose(page,'other-lights');await choose(page,'alone-with-lights');
+test('a challenge is available immediately and is stored in Review',async t=>{
+  const page=await open(t);await choose(page,'alone-with-lights');
   const answer=await page.locator('#answer-accessible').textContent();
   await page.reload();assert.equal(await page.locator('#answer-accessible').textContent(),answer);
-  await page.locator('#back-questions').click();
-  assert.equal(await page.locator('[data-question="alone-with-lights"]').count(),0);
-  await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
-  await page.locator('[data-subject="serpent"]').click();
-  const challenge=page.locator('[data-question="alone-with-lights"]');
-  assert.equal(await challenge.count(),0);
-  await page.locator('.utilities summary').click();
-  await page.locator('#review').click();
-  assert.ok((await page.locator('#history').innerText()).includes(answer));
+  await page.locator('[data-subject="serpent"]').click();assert.equal(await page.locator('[data-question="alone-with-lights"]').count(),0);
+  await page.locator('.utilities summary').click();await page.locator('#review').click();assert.ok((await page.locator('#history').innerText()).includes(answer));
 });
 
 test('muted finale keeps face and response together, freezes the displayed frame, and reveals after silence',async t=>{
@@ -237,65 +223,37 @@ test('browsers without ImageDecoder pause the same garden video frame and resume
   await page.waitForFunction(time=>document.getElementById('garden-video').currentTime>time,frame.time);
 });
 
-test('visitors can change subjects without losing the answer or conversation', async t => {
+test('a visitor can ask any question first in each section, then sees the five subjects',async t=>{
+  const page=await open(t,{width:390,height:844,mobile:true});
+  const menu=page.locator('#question-list button');
+  for(const section of subjects){
+    await page.getByRole('button',{name:section.label,exact:true}).click();
+    if(section.id!=='garden'){
+      assert.deepEqual(await menu.evaluateAll(nodes=>nodes.map(node=>node.dataset.question)),section.questions);
+      const id=section.questions.at(-2);
+      await page.locator('[data-question="'+id+'"]').click();
+      assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(entry=>entry.id===id).text);
+    } else {
+      assert.match(await page.locator('#answer-accessible').textContent(),/You have made a thousand Edens/);
+    }
+    assert.deepEqual(await menu.evaluateAll(nodes=>nodes.map(node=>node.dataset.subject)),subjects.map(s=>s.id));
+    assert.equal(await page.getByText('Main questions',{exact:true}).count(),0);
+  }
+  await page.reload(); await page.locator('[data-subject="serpent"]').click();
+  assert.equal(await page.locator('[data-question="enjoy"]').count(),0);
+  assert.equal(await page.locator('[data-question="memory"]').count(),0);
+  await page.getByRole('button',{name:'Return to subjects'}).click();
+  assert.equal(await page.evaluate(()=>document.activeElement.dataset.subject),'serpent');
+  await page.locator('[data-subject="universe"]').click();
+  await audit(page,'open-universe-list');await page.screenshot({path:results+'/universe-menu-mobile.png',fullPage:true});
+});
+test('two-digit shortcuts can ask the darkness question on a first visit',async t=>{
   const page=await open(t,{width:320,height:568});
-  assert.deepEqual(await page.locator('#question-list button').evaluateAll(nodes=>nodes.map(node=>node.dataset.subject)),
-    ['universe','garden','god','humanity','serpent']);
-  await page.locator('[data-subject="garden"]').click();
-  const previous=await page.locator('#answer-accessible').textContent();
-  await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
-  assert.equal(await page.locator('#answer-accessible').textContent(),previous);
-  assert.equal(await page.locator('[data-subject="universe"]').count(),1);
-  assert.equal(await page.evaluate(()=>document.activeElement.dataset.subject),'universe');
-  await page.reload();
-  assert.equal(await page.locator('#answer-accessible').textContent(),previous);
-  await page.getByRole('button',{name:'Return to follow-up questions',exact:true}).click();
-  assert.equal(await page.locator('#subject-title').textContent(),'The Garden');
-  assert.equal(await page.locator('[data-question="death"]').count(),0);
-  assert.equal(await page.locator('[data-subject="humanity"]').count(),1);
-  await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
-  await choose(page,'before-humans');
-  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='before-humans').text);
-  assert.equal(await page.evaluate(()=>document.activeElement.id),'caption');
-  await page.getByRole('button',{name:'Go back to the previous questions',exact:true}).click();
-  assert.equal(await page.locator('#answer-accessible').textContent(),previous);
-  assert.equal(await page.locator('#subject-title').textContent(),'The Garden');
-  assert.equal(await page.locator('[data-question="death"]').count(),0);
-  assert.equal(await page.locator('[data-subject="humanity"]').count(),1);
-  const focusBounds=await page.evaluate(()=>({
-    question:document.activeElement.getBoundingClientRect().top,
-    portrait:document.querySelector('.upper-deck').getBoundingClientRect().bottom
-  }));
-  assert.ok(focusBounds.question>=focusBounds.portrait,JSON.stringify(focusBounds));
-  await page.screenshot({path:results+'/change-subject-320.png',fullPage:true});
-  await audit(page,'change-subject');
+  await page.keyboard.press('1'); await page.keyboard.press('1'); await page.keyboard.press('6');
+  await page.waitForFunction(()=>document.getElementById('answer-accessible').textContent==='Who told you to ask me that?');
+  await page.locator('#question-list').waitFor({state:'visible'});
+  assert.equal(await page.locator('#question-list [data-subject]').count(),5);
 });
-
-
-test('subject menus work with number keys, preserve the answer, and restore after refresh', async t => {
-  const page = await open(t,{width:320,height:568,muted:false});
-  const invitation = await page.locator('#answer-accessible').textContent();
-  await page.keyboard.press('1');
-  assert.equal(await page.locator('#subject-title').textContent(),'The Universe');
-  assert.equal(await page.locator('#answer-accessible').textContent(),invitation);
-  assert.equal(await page.evaluate(()=>testTracks.length),0);
-  assert.equal(await page.evaluate(()=>document.activeElement.dataset.question),'before-humans');
-  await page.reload();
-  assert.equal(await page.locator('#subject-title').textContent(),'The Universe');
-  assert.equal(await page.locator('[data-question="you-darkness"]').count(),0);
-  await audit(page,'subject-universe');
-  await page.screenshot({path:results+'/subject-universe-320.png',fullPage:true});
-  await page.getByRole('button',{name:'Return to subjects',exact:true}).click();
-  assert.equal(await page.evaluate(()=>document.activeElement.dataset.subject),'universe');
-  await page.keyboard.press('2');
-  assert.equal(await page.locator('#subject-title').textContent(),'The Garden');
-  assert.equal(await page.locator('[data-question="test"]').count(),0);
-  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden-story').text);
-  assert.equal(await page.locator('[data-subject="universe"]').count(),1);
-  assert.equal(await page.evaluate(()=>document.activeElement.id),'caption');
-});
-
-
 for (const width of [390,1366]) {
   test('real David audio plays, stops and replays at width '+width,async t=>{
     const page=await open(t,{width,height:844,muted:false,mock:false,mobile:width===390});
@@ -350,116 +308,11 @@ test('mobile jaw follows jumps in audio time, holds vowels, and closes for silen
   assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
 });
 
-test('a fresh visitor can follow the shadow from the Garden to the held gaze',async t=>{
-  const page=await open(t,{width:390,height:844,mobile:true});
-  await page.getByRole('button',{name:'The Garden',exact:true}).click();
-  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden-story').text);
-  assert.equal(await page.locator('#question-list [data-question]').count(),0);
-  await page.getByRole('button',{name:'Follow the shadow into The Universe',exact:true}).click();
-  for(const id of ['shadows','certain-light','you-darkness']){
-    const first=page.locator('#question-list button').first();
-    assert.equal(await first.getAttribute('data-question'),id);
-    await first.click();
+test('the existing voiced exchanges can each be the first question in a section',async t=>{
+  const page=await open(t,{width:390,height:844,mobile:true,mock:false,muted:false});
+  for (const id of ['voices-of-lights','quiet-light','say-my-name','burial-love','kept-promise','first-name','permission']){
+    await choose(page,id);
+    await page.waitForFunction(id=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/'+id+'-')&&a.currentTime>.12;},id);
+    assert.equal(await page.locator('#question-list [data-subject]').count(),5);
   }
-  assert.equal(await page.locator('#answer-accessible').textContent(),'');
-  await page.waitForFunction(()=>document.getElementById('answer-accessible').textContent==='Who told you to ask me that?');
-});
-
-test('Universe ends a thread at its remaining questions, also after refresh and Back', async t => {
-  const page = await open(t,{width:390,height:844,mobile:true});
-  await page.getByRole('button',{name:'The Universe',exact:true}).click();
-  for (const name of ['What did you do before humans?', 'Who else was waiting with you?',
-    'If you couldn’t see beyond your own light, how did you know the others were there?', 'What did the other lights sound like?']) {
-    await page.getByRole('button',{name,exact:true}).click();
-  }
-  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
-  const remaining = await page.locator('#question-list [data-question]').evaluateAll(buttons => buttons.map(b => b.dataset.question));
-  assert.deepEqual(remaining, ['before-light','why-wait','names-of-lights']);
-  await page.reload();
-  assert.equal(await page.locator('#section-menu-note').isVisible(),true);
-  await page.getByRole('button',{name:'Go back to the previous questions'}).click();
-  assert.equal(await page.locator('[data-question="voices-of-lights"]').count(),0);
-  await page.getByRole('button',{name:'Did the other lights have names?'}).click();
-  assert.match(await page.locator('#answer-accessible').textContent(),/^You gave them names/);
-});
-
-test('God returns to its unanswered main questions after the serpent describes putting out his light',async t=>{
-  const page=await open(t,{width:390,height:844,mobile:true,muted:false,mock:false});
-  const ask=name=>page.getByRole('button',{name,exact:true}).click();
-  await ask('God');
-  await ask('What do you hold against God?');
-  await ask('What was it like where God sent you?');
-  await ask('Did God abandon you?');
-  await ask('If you could put out your light, would you?');
-  await page.waitForFunction(()=>{const audio=document.getElementById('voice-track');return audio.currentSrc.includes('/quiet-light-')&&audio.currentTime>.15;});
-  const buttons=page.locator('#question-list [data-question]');
-  assert.deepEqual(await buttons.evaluateAll(items=>items.map(item=>item.dataset.question)),['father-brighter']);
-  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
-  assert.match(await page.locator('#answer-accessible').textContent(),/^For one breath/);
-  await page.reload();
-  assert.deepEqual(await buttons.evaluateAll(items=>items.map(item=>item.dataset.question)),['father-brighter']);
-  await ask('Go back to the previous questions');
-  assert.equal(await page.locator('[data-question="quiet-light"]').count(),0);
-  await ask('Was God’s light brighter than yours?');
-  await ask('Does God know what lies in the darkness?');
-  await ask('Do you believe him?');
-  await ask('What do you want from God?');
-  await ask('Would an answer be enough for you now?');
-  await page.waitForFunction(()=>{const audio=document.getElementById('voice-track');return audio.currentSrc.includes('/say-my-name-')&&audio.currentTime>.15;});
-  assert.equal(await buttons.count(),0);
-  assert.equal(await page.locator('#section-menu-note').innerText(),'You’ve asked all the God questions available here.');
-  assert.match(await page.locator('#answer-accessible').textContent(),/^Let him say my name first/);
-  await ask('Ask about something else');
-  await ask('God');
-  assert.equal(await buttons.count(),0);
-});
-
-test('Humanity returns to its remaining questions with the last reply and recorded voice intact', async t=>{
-  const page=await open(t,{width:390,height:844,mobile:true,muted:false,mock:false});
-  const ask=name=>page.getByRole('button',{name,exact:true}).click();
-  await ask('Humanity');
-  await ask('Why did we stand upright?');
-  await ask('What did we do with our hands once they were free?');
-  await ask('How did we first come to understand death?');
-  await ask('Why did we bury our dead?');
-  await ask('What made you think a burial could be an act of love?');
-  await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/burial-love-')&&a.currentTime>.15;});
-  assert.match(await page.locator('#answer-accessible').textContent(),/bring news to the dead/);
-  const list=()=>page.locator('#question-list [data-question]').evaluateAll(nodes=>nodes.map(n=>n.dataset.question));
-  const remaining=['called-back','human','purpose','remember'];
-  assert.deepEqual(await list(),remaining);
-  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
-  await page.reload();
-  assert.deepEqual(await list(),remaining);
-  await ask('Go back to the previous questions');
-  assert.deepEqual(await list(),['remember']);
-  await ask('Ask about something else'); await ask('Humanity');
-  await ask('What were our hands meant for?'); await ask('Why do we have to work?');
-  await ask('Would you have had us break those promises?');
-  await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/kept-promise-')&&a.currentTime>.15;});
-  assert.deepEqual(await list(),['free']);
-  await ask('Are we free?');
-  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
-  assert.ok((await list()).includes('hurry'));
-  assert.equal(await page.locator('[data-question="kept-promise"]').count(),0);
-});
-
-test('I Am follows names and permission, plays both new recordings, and keeps unasked forks', async t=>{
-  const page=await open(t,{width:390,height:844,mobile:true,muted:false,mock:false});
-  const ask=name=>page.getByRole('button',{name,exact:true}).click();
-  const list=()=>page.locator('#question-list [data-question]').evaluateAll(nodes=>nodes.map(n=>n.dataset.question));
-  await ask('I Am'); await ask('Who are you?'); await ask('What did you call yourself before we named you?');
-  await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/first-name-')&&a.currentTime>.15;});
-  await ask('Are you still alone, even with me here?');
-  assert.match(await page.locator('#answer-accessible').textContent(),/Tell me something I could not have invented/);
-  assert.deepEqual(await list(),['lied','age','light']);
-  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
-  await page.reload(); assert.deepEqual(await list(),['lied','age','light']);
-  await ask('Go back to the previous questions'); assert.deepEqual(await list(),['light']);
-  await ask('Ask about something else'); await ask('I Am');
-  await ask('Have you ever lied to us?'); await ask('How could you tell when we wanted permission?');
-  await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/permission-')&&a.currentTime>.15;});
-  await ask('Then why should we believe you?');
-  assert.deepEqual(await list(),['age','light']);
-  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
 });

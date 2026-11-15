@@ -1,72 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { dialogues, contradictions, relatedDialogues, DialogueJourney, isUnlocked } from '../dialogue.js';
-
-test('choice groups stay bounded even after the whole conversation is unlocked', () => {
-  const visited = new Set(dialogues.map(d => d.id));
-  assert.equal(relatedDialogues('opening', visited).length, 6);
-  for (const entry of dialogues) {
-    const related = relatedDialogues(entry.id, visited);
-    const challenges = related.filter(item => contradictions.includes(item));
-    assert.ok(related.length - challenges.length <= 4, entry.id + ' has too many ordinary choices');
-    assert.ok(challenges.length <= 1, 'At most one paired-claim challenge is added to a context');
-    assert.equal(new Set(related.map(d => d.id)).size, related.length);
-    assert.ok(!related.some(d => d.id === entry.id));
-  }
+import { DialogueJourney } from '../dialogue.js';
+test('back from a section keeps the reply, back from the five subjects restores the previous answer',()=>{
+  const j=new DialogueJourney();
+  assert.ok(j.selectSubject('god')); assert.ok(j.choose('want-god'));
+  assert.ok(j.selectSubject('universe')); j.back(); assert.equal(j.current.id,'want-god');
+  assert.ok(j.selectSubject('universe')); assert.ok(j.choose('you-darkness'));
+  j.back(); assert.equal(j.current.id,'want-god');
+  j.selectSubject('universe'); assert.equal(j.choose('you-darkness'),false);
+  assert.equal(j.choose('burial'),false);
 });
-
-test('all 61 answers remain reachable through the actual related-choice graph', () => {
-  const visited = new Set();
-  const contexts = new Set(['opening']);
-  for (let pass = 0; pass <= dialogues.length; pass++) {
-    const before = visited.size;
-    for (const context of [...contexts]) {
-      for (const entry of relatedDialogues(context, visited)) {
-        assert.ok(isUnlocked(entry, visited));
-        visited.add(entry.id); contexts.add(entry.id);
-      }
-    }
-    if (visited.size === before) break;
-  }
-  assert.deepEqual([...visited].sort(), dialogues.map(d => d.id).sort());
-});
-
-test('back restores the previous answer and its choices without forgetting progress', () => {
-  const journey = new DialogueJourney();
-  for (const id of ['upright', 'hands', 'purpose', 'work']) assert.ok(journey.choose(id));
-  assert.deepEqual(journey.choices.map(d => d.id), ['free','kept-promise']);
-  journey.back();
-  assert.equal(journey.current.id, 'purpose');
-  assert.deepEqual(journey.choices.map(d => d.id), ['work']);
-  assert.ok(journey.visited.has('work'));
-  journey.back();
-  assert.equal(journey.current.id, 'hands');
-  assert.deepEqual(journey.choices.map(d => d.id), ['purpose']);
-});
-
-test('first questions resets the trail but preserves unlocks and rejects off-menu selections', () => {
-  const journey = new DialogueJourney();
-  journey.choose('identity'); journey.choose('evil');
-  journey.firstQuestions();
-  assert.equal(journey.current.id, 'opening');
-  assert.equal(journey.canGoBack, false);
-  journey.back();
-  assert.equal(journey.trail.length, 1);
-  assert.equal(journey.choose('memory'), false);
-  assert.equal(journey.trail.length, 1);
-  assert.equal(journey.choose('evil'), false);
-  journey.selectSubject('serpent');
-  assert.ok(journey.choose('light'));
-  assert.ok(journey.choices.some(d => d.id === 'memory'));
-});
-
-test('numbered selections follow the displayed group instead of the global unlock list', () => {
-  const journey = new DialogueJourney();
-  journey.choose('identity');
-  assert.equal(journey.choices[0].id, 'age');
-  journey.choose(journey.choices[0].id);
-  assert.equal(journey.current.id, 'age');
-  assert.equal(journey.choices[0].id, 'before-humans');
-  assert.equal(journey.choices[5], undefined);
-});
-

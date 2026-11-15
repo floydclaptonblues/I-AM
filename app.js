@@ -1,7 +1,7 @@
-import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=serpent-threads-1';
-import { loadSession, saveSession } from './session.js?v=serpent-threads-1';
+import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=open-menu-1';
+import { loadSession, saveSession } from './session.js?v=open-menu-1';
 import { FirstVisitGreeting } from './speech.js?v=immersion-1';
-import { RecordedNarrator } from './recorded-voice.js?v=serpent-threads-1';
+import { RecordedNarrator } from './recorded-voice.js?v=open-menu-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
 import { Portrait } from './portrait.js?v=mouth-1';
@@ -65,10 +65,10 @@ function play({ focus = false } = {}) {
 function choose(entry) {
   if (entry.kind === 'subject') {
     cancelGreeting(); stopResponse(); showText(current.text);
-    journey.selectSubject(entry.id);
+    if (!journey.selectSubject(entry.id)) return;
     if (entry.id === 'garden') { choose(journey.menuChoices[0]); return; }
     renderChoices({ focus:true });
-    $('status').textContent = 'Questions about ' + subjects.find(subject => subject.id === entry.id).title.toLowerCase() + '.';
+    $('status').textContent = '';
     remember(); return;
   }
   if (!journey.choose(entry.id)) return;
@@ -84,12 +84,13 @@ function remember() {
   if (!saveSession(journey, { muted, still })) $('status').textContent = 'This browser could not save your place. You can continue this visit.';
 }
 function renderChoices({ focus = false, focusId = null } = {}) {
+  cancelNumberShortcut();
   const fragment = document.createDocumentFragment();
-  [...journey.menuChoices, ...journey.transitions].forEach((entry,index) => {
+  journey.menuChoices.forEach((entry,index) => {
     const li = document.createElement('li'), button = document.createElement('button');
     const number = document.createElement('span'); number.className='choice-number'; number.textContent = String(index+1)+'.'; number.setAttribute('aria-hidden','true');
     const label = document.createElement('span'); label.textContent = questionLabel(entry);
-    button.type='button';
+    button.type='button'; button.disabled = Boolean(entry.disabled);
     if (entry.kind === 'subject') button.dataset.subject=entry.id;
     else { button.dataset.question=entry.id; button.dataset.visited=String(journey.visited.has(entry.id)); }
     button.setAttribute('aria-controls',entry.kind === 'subject' ? 'question-list' : 'caption');
@@ -100,48 +101,24 @@ function renderChoices({ focus = false, focusId = null } = {}) {
   const menuSubject = journey.menuSubject;
   $('subject-title').hidden = !menuSubject;
   $('subject-title').textContent = menuSubject?.title || '';
-  const note = $('section-menu-note');
-  note.hidden = !journey.atSectionMain;
-  if (!note.hidden) {
-    const finished = menuSubject.id === 'universe' ? 'You’ve asked everything in The Universe.' : 'You’ve asked all the ' + menuSubject.title + ' questions available here.';
-    note.textContent = journey.menuChoices.length ? 'Main questions' : finished;
-  }
   $('questions').setAttribute('aria-label', menuSubject ? 'Questions about ' + menuSubject.title : 'Subjects to ask the serpent about');
   $('question-navigation').hidden = !journey.canGoBack && !selectedSubject;
-  $('back-questions').hidden = journey.showingSubjects;
-  $('back-questions').setAttribute('aria-label', selectedSubject ? 'Return to subjects' : 'Go back to the previous questions');
-  $('first-questions').hidden = Boolean(selectedSubject);
-  $('first-questions').textContent = journey.browsing ? 'CONTINUE THIS CONVERSATION' : 'ASK SOMETHING ELSE';
-  $('first-questions').setAttribute('aria-label', journey.browsing ? 'Return to follow-up questions' : 'Ask about something else');
+  $('back-questions').setAttribute('aria-label', selectedSubject ? 'Return to subjects' : 'Go back to the previous answer');
   $('questions').scrollTop = 0;
   if (focus) {
-    const target = (focusId && $('question-list').querySelector('[data-question="'+focusId+'"], [data-subject="'+focusId+'"]'))
-      || $('question-list').querySelector('button') || $('back-questions');
+    const target = (focusId && $('question-list').querySelector('[data-question="'+focusId+'"], [data-subject="'+focusId+'"]:enabled'))
+      || $('question-list').querySelector('button:enabled') || $('back-questions');
     target.focus({ preventScroll: true });
     target.scrollIntoView({ block: 'center', behavior: 'instant' });
   }
 }
-function returnToQuestions(first = false) {
+function returnToQuestions() {
   cancelGreeting();
-  const focusId = journey.subject || (first ? journey.trail[1] : current.id);
-  const wasSubject = Boolean(journey.subject);
-  stopResponse();
-  if (wasSubject) journey.showSubjects(); else if (first) journey.firstQuestions(); else journey.back();
-  current = journey.current;
-  updateSound();
-  showText(current.text);
-  renderChoices({ focus: true, focusId });
-  $('status').textContent = journey.showingSubjects ? 'Choose a subject.' : 'Earlier questions.';
-  remember();
+  const focusId = journey.subject || subjects.find(item => item.questions.includes(current.id))?.id;
+  stopResponse(); journey.back(); current = journey.current;
+  updateSound(); showText(current.text); renderChoices({focus:true, focusId}); remember();
 }
-$('back-questions').addEventListener('click', () => returnToQuestions());
-$('first-questions').addEventListener('click', () => {
-  cancelGreeting(); stopResponse(); showText(current.text);
-  journey.changeSubject();
-  renderChoices({ focus: true });
-  $('status').textContent = journey.showingSubjects ? 'Choose a subject.' : 'Follow-up questions.';
-  remember();
-});
+$('back-questions').addEventListener('click', returnToQuestions);
 $('listen').addEventListener('click', () => play());
 $('hear-opening').addEventListener('click', () => play());
 $('stop').addEventListener('click', () => { cancelGreeting(); stopResponse(); showText(current.text); });
@@ -202,14 +179,28 @@ $('confirm-restart').addEventListener('click', () => {
   play({ focus: true });
   remember();
 });
+let numberTimer;
+function cancelNumberShortcut() {
+  clearTimeout(numberTimer); numberTimer = undefined;
+}
+document.addEventListener('pointerdown', cancelNumberShortcut);
 document.addEventListener('keydown',event=>{
-  if($('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
-  if(/^[1-9]$/.test(event.key)){
-    const entry=[...journey.menuChoices,...journey.transitions][Number(event.key)-1];if(entry && !heldResponse.active){event.preventDefault();choose(entry);}
-  }else if(event.key==='Escape'){cancelGreeting();stopResponse();showText(current.text);}
+  const prefix = numberTimer !== undefined;
+  cancelNumberShortcut();
+  if ($('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;
+  if (event.key === 'Escape') { cancelGreeting(); stopResponse(); showText(current.text); return; }
+  if (!/^\d$/.test(event.key) || heldResponse.active) return;
+  const items = journey.menuChoices;
+  const n = Number((prefix ? '1' : '') + event.key);
+  if (!prefix && n === 1 && items.length >= 10) {
+    event.preventDefault();
+    numberTimer = setTimeout(()=>{ cancelNumberShortcut(); choose(items[0]); }, 650);
+  } else if (items[n-1] && !items[n-1].disabled) {
+    event.preventDefault(); choose(items[n-1]);
+  }
 });
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){cancelGreeting();stopResponse();portrait.suspend();garden.freeze(true);showText(current.text);}
+  if(document.hidden){cancelNumberShortcut();cancelGreeting();stopResponse();portrait.suspend();garden.freeze(true);showText(current.text);}
   else {portrait.start();updateMotion();greeting.start();}
 });
 window.addEventListener('pagehide',()=>{stopResponse();portrait.suspend();garden.freeze(true);});

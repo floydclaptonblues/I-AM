@@ -1,73 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DialogueJourney, dialogues, opening, questionLabel, isUnlocked } from '../dialogue.js';
-
-test('the invitation leads to questions that require no prior story', () => {
-  assert.equal(opening, "What would you like to know? Since you already ate from the tree, I can tell you now and you'll understand.");
-  const journey = new DialogueJourney();
-  assert.deepEqual(journey.choices.map(questionLabel), [
-    'Who are you?', 'Why were you in the garden?', 'Why did we stand upright?',
-    'Why are you evil?', 'What did you do before humans?', 'How old are you?'
-  ]);
-  assert.ok(journey.choose('before-humans'));
-  assert.equal(questionLabel(journey.choices[0]), 'Who else was waiting with you?');
-  assert.equal(journey.choices[1].id, 'why-wait');
-  assert.ok(journey.choices.some(entry => entry.id === 'called-back'));
-  assert.ok(journey.choose(journey.choices[0].id));
-  assert.match(journey.current.text, /^There were others\. We were lights,/);
-  assert.ok(journey.choices.some(entry => entry.id === 'names-of-lights'));
-  const restored = new DialogueJourney();
-  assert.ok(restored.restore(journey.snapshot()));
-  assert.equal(restored.transcript.at(-1).question, 'Who else was waiting with you?');
-  assert.ok(restored.visited.has('other-lights'));
-  assert.equal(restored.choose('other-lights'), false);
-  assert.equal(questionLabel(restored.menuChoices[0]), 'If you couldn’t see beyond your own light, how did you know the others were there?');
-  assert.ok(restored.choose('heard-the-others'));
-  assert.equal(restored.current.text, 'I hear and feel beyond your comprehension...');
+import { dialogues, gardenStory, DialogueJourney } from '../dialogue.js';
+test('each sentence in the Garden narration comes from one of the six original Garden exchanges',()=>{
+  const sources=['garden','came-garden','test','others','paradise','return'].map(id=>dialogues.find(d=>d.id===id).text);
+  const lines=gardenStory.text.match(/[^.!?]+[.!?]/g).map(s=>s.trim());
+  assert.ok(lines.every(line=>sources.some(s=>s.includes(line))));
+  assert.ok(sources.every(s=>lines.some(line=>s.includes(line))));
 });
-
-test('the fruit and fallen questions follow statements that make them meaningful', () => {
-  const journey = new DialogueJourney();
-  assert.ok(!journey.choices.some(entry => ['test','others'].includes(entry.id)));
-  journey.choose('garden');
-  assert.equal(questionLabel(journey.choices[0]), 'What happened when we reached for the fruit?');
-  journey.choose('test');
-  assert.ok(journey.choices.some(entry => questionLabel(entry) === 'What happened to those who fell?'));
-});
-
-test('changing subjects retains the answer, transcript, back trail and saved menu', () => {
-  const journey = new DialogueJourney();
-  journey.choose('garden'); journey.choose('test');
-  const before = journey.snapshot(), answer = journey.current.text;
-  journey.changeSubject();
-  assert.equal(journey.current.text, answer);
-  assert.deepEqual(journey.history, before.history);
-  assert.deepEqual(journey.trail, before.trail);
-  const restored = new DialogueJourney();
-  assert.ok(restored.restore(journey.snapshot()));
-  assert.equal(restored.browsing, true);
-  assert.ok(restored.choose('before-humans'));
-  assert.equal(restored.browsing, false);
-  restored.back();
-  assert.equal(restored.current.id, 'test');
-  assert.equal(restored.browsing, false);
-  journey.changeSubject();
-  assert.deepEqual(journey.choices.map(entry => entry.id), ['death','others']);
-});
-
-test('without the shadow admission the identity challenge requires the extended discoveries', () => {
-  const finalGate = dialogues.find(entry => entry.id === 'certain-light');
-  for (const missing of ['identity', 'age', 'happy', 'darkness-ended']) {
-    const visited = new Set(dialogues.map(entry => entry.id)); visited.delete(missing); visited.delete('shadows');
-    assert.equal(isUnlocked(finalGate, visited), false, missing);
+test('old sessions retain other answers and omit the retired solitude exchange and its alias',()=>{
+  for(const key of ['memory','alone-with-me']){
+    const j=new DialogueJourney();
+    assert.ok(j.restore({trail:['opening','identity','memory'],history:['identity',key]}));
+    assert.equal(j.current.id,'identity');assert.deepEqual(j.history,['identity']);
+    j.selectSubject('serpent'); assert.ok(!j.menuChoices.some(entry=>entry.id==='memory'));
   }
-});
-
-test('old saves beginning with the removed opening questions still restore', () => {
-  for (const id of ['test','others']) {
-    const journey = new DialogueJourney();
-    assert.ok(journey.restore({ trail:['opening',id], history:[id] }));
-    assert.equal(journey.current.id, id);
-    assert.ok(journey.choices.length > 0);
-  }
+  const j=new DialogueJourney();
+  assert.ok(j.restore({trail:['opening','garden','test'],history:['garden','test'],subject:'universe',browsing:true}));
+  assert.equal(j.current.id,'test');assert.equal(j.menuChoices.length,16);
 });
