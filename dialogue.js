@@ -383,6 +383,12 @@ export const contradictions = [
   }
 ];
 dialogues.push(...contradictions);
+dialogues.push({
+  id: 'heard-the-others',
+  label: 'If you couldn’t see beyond your own light, how did you know the others were there?',
+  requires: ['other-lights'],
+  text: 'I hear and feel beyond your comprehension...'
+});
 export const questionLabel = entry => entry.displayLabel || entry.label;
 export function isUnlocked(entry, visited) {
   return openingQuestions.includes(entry.id)
@@ -392,7 +398,7 @@ export function isUnlocked(entry, visited) {
 
 // Subjects organize the visitor's questions; they never count as discoveries.
 export const subjects = [
-  { id:'universe', label:'The Universe', title:'The Universe', questions:['before-humans','why-wait','before-light','other-lights','names-of-lights','fill-darkness','darkness-fear','darkness-end','shadows','nothing-darkness','darkness-ended','certain-light','you-darkness'] },
+  { id:'universe', label:'The Universe', title:'The Universe', questions:['before-humans','why-wait','before-light','other-lights','heard-the-others','names-of-lights','fill-darkness','darkness-fear','darkness-end','shadows','nothing-darkness','darkness-ended','certain-light','you-darkness'] },
   { id:'garden', label:'The Garden', title:'The Garden', questions:['garden','test','others','paradise','return','came-garden'] },
   { id:'god', label:'God', title:'God', questions:['evil','darkness','abandoned','father-brighter','god-knows','believe-father','want-god','questioned-father'] },
   { id:'humanity', label:'Humanity', title:'Humanity', questions:['upright','hands','human','purpose','work','death','burial','remember','hurry','free','called-back','happy','want-more','become'] },
@@ -406,7 +412,7 @@ export function subjectQuestions(id, visited) {
       && (!context[entry.id] || visited.has(context[entry.id]) || visited.has(entry.id)));
 }
 
-const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory', "human", "purpose", "work", "death", "burial", "remember", "hurry", "free", "hate", "darkness", "abandoned", "lied", "believe", "paradise", "return", "enjoy", "age"].concat(["before-humans","why-wait","before-light","other-lights","names-of-lights","fill-darkness","father-brighter","darkness-fear","darkness-end","shadows","called-back","happy","want-more","came-garden","become","god-knows","believe-father","want-god","nothing-darkness","darkness-ended","certain-light","you-darkness"]);
+const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory', "human", "purpose", "work", "death", "burial", "remember", "hurry", "free", "hate", "darkness", "abandoned", "lied", "believe", "paradise", "return", "enjoy", "age"].concat(["before-humans","why-wait","before-light","other-lights","heard-the-others","names-of-lights","fill-darkness","father-brighter","darkness-fear","darkness-end","shadows","called-back","happy","want-more","came-garden","become","god-knows","believe-father","want-god","nothing-darkness","darkness-ended","certain-light","you-darkness"]);
 export function availableDialogues(visited) {
   return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions]
     .filter(entry => isUnlocked(entry, visited));
@@ -445,7 +451,8 @@ const followUps = {
   "before-humans": ["other-lights","why-wait","called-back","age"],
   "why-wait": ["before-light","other-lights","fill-darkness","called-back"],
   "before-light": ["father-brighter","other-lights","fill-darkness"],
-  "other-lights": ["names-of-lights","fill-darkness","before-light"],
+  "other-lights": ["heard-the-others","names-of-lights","fill-darkness","before-light"],
+  "heard-the-others": ["names-of-lights","other-lights","why-wait"],
   "names-of-lights": ["other-lights","father-brighter","called-back"],
   "fill-darkness": ["darkness-end","darkness-fear","father-brighter"],
   "darkness-fear": ["darkness-end","shadows","fill-darkness"],
