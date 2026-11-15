@@ -16,7 +16,7 @@ for (const challenge of contradictions) {
 }
 
 test('the supplied three reactions are exact and no prior answers are replaced', () => {
-  assert.equal(dialogues.length,52);
+  assert.equal(dialogues.length,53);
   assert.deepEqual(contradictions.map(d=>d.text), [
     'I said creation called back. You mistake the light for the things it illuminated. Or perhaps I have mistaken them.',
     'I wondered when you would notice.',
@@ -34,8 +34,8 @@ test('both light and darkness enter cosmic origins without visiting identity', (
   }
 });
 
-test('alternate entrance does not remove age from the final identity gate', () => {
-  const seen = new Set(dialogues.map(d=>d.id)); seen.delete('age');
+test('the extended identity route still involves the age discovery', () => {
+  const seen = new Set(dialogues.map(d=>d.id)); seen.delete('age'); seen.delete('shadows');
   assert.ok(!availableDialogues(seen).some(d=>d.id==='certain-light'));
   assert.ok(relatedDialogues('happy',seen).some(d=>d.id==='identity'));
 });

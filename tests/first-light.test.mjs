@@ -44,12 +44,12 @@ test('the obsession and identity gates cannot be bypassed by unrelated discoveri
     assert.ok(!availableDialogues(visited).some(d => d.id === 'darkness-ended'));
   }
   for (const required of ['darkness-ended','happy']) {
-    const visited = new Set(all); visited.delete(required);
+    const visited = new Set(all); visited.delete('shadows'); visited.delete(required);
     assert.ok(!availableDialogues(visited).some(d => d.id === 'certain-light'));
   }
 });
 
-test('the final question still requires sixteen distinct discoveries across all three themes', () => {
+test('the extended path to the final question preserves sixteen distinct discoveries across all three themes', () => {
   const required = new Set();
   function collect(id) {
     for (const parent of dialogues.find(d => d.id === id).requires || []) {

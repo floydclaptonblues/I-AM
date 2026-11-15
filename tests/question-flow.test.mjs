@@ -58,10 +58,10 @@ test('changing subjects retains the answer, transcript, back trail and saved men
   assert.deepEqual(journey.choices.map(entry => entry.id), ['death','others']);
 });
 
-test('direct cosmic and age questions cannot bypass the final identity discoveries', () => {
+test('without the shadow admission the identity challenge requires the extended discoveries', () => {
   const finalGate = dialogues.find(entry => entry.id === 'certain-light');
   for (const missing of ['identity', 'age', 'happy', 'darkness-ended']) {
-    const visited = new Set(dialogues.map(entry => entry.id)); visited.delete(missing);
+    const visited = new Set(dialogues.map(entry => entry.id)); visited.delete(missing); visited.delete('shadows');
     assert.equal(isUnlocked(finalGate, visited), false, missing);
   }
 });

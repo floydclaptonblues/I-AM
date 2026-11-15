@@ -67,6 +67,7 @@ export const dialogues = [
   },
   {
     "id": "death",
+    "requiresAny": [["garden-story"]],
     "label": "Did you teach us death?",
     "requires": [
       "test"
@@ -254,6 +255,8 @@ export const dialogues = [
   },
   {
     "id": "shadows",
+    "displayLabel": "Where did the first shadow come from?",
+    "requiresAny": [["garden-story"]],
     "label": "Did you create anything?",
     "text": "I made shadows. Wherever my light met something that would not permit it to pass, a shadow appeared. I had wished to remove darkness, and discovered I could give it shape. I have been accused of creating many things. That was the first.",
     "requires": [
@@ -344,6 +347,7 @@ export const dialogues = [
   },
   {
     "id": "certain-light",
+    "requiresAny": [["shadows"]],
     "label": "Are you certain you are light?",
     "text": "What else would I be?",
     "requires": [
@@ -390,6 +394,15 @@ dialogues.push({
   text: 'I hear and feel beyond your comprehension...'
 });
 export const questionLabel = entry => entry.displayLabel || entry.label;
+export const gardenStory = {
+  id: 'garden-story', label: 'The Garden', response: 'story',
+  text: [
+    'I was in the fig tree before you could reach its lowest branch. You let me stay because I ate what ate the figs. From below, I must have looked like another twist in the wood.',
+    'The first hand I bit had a pale scar across the thumb. I remember that better than the face. A fig struck the ground. Then the boy who had picked it. His brother sat beside him until the flies came. By morning there was fresh earth under my tree. The next hand reached a little to the left.',
+    'Years later, when you left the garden, the figs were ripe again. The last child stopped at the edge of the shade. My shadow lay across his bare foot. He lifted his foot quite carefully, as though he might hurt me. Of all the things you have done since, that is the one I cannot explain.'
+  ].join('\n\n')
+};
+dialogues.push(gardenStory);
 export function isUnlocked(entry, visited) {
   return openingQuestions.includes(entry.id)
     || (entry.requires || []).every(id => visited.has(id))
@@ -399,7 +412,7 @@ export function isUnlocked(entry, visited) {
 // Subjects organize the visitor's questions; they never count as discoveries.
 export const subjects = [
   { id:'universe', label:'The Universe', title:'The Universe', questions:['before-humans','why-wait','before-light','other-lights','heard-the-others','names-of-lights','fill-darkness','darkness-fear','darkness-end','shadows','nothing-darkness','darkness-ended','certain-light','you-darkness'] },
-  { id:'garden', label:'The Garden', title:'The Garden', questions:['garden','test','others','paradise','return','came-garden'] },
+  { id:'garden', label:'The Garden', title:'The Garden', questions:['garden-story','garden','test','others','paradise','return','came-garden'] },
   { id:'god', label:'God', title:'God', questions:['evil','darkness','abandoned','father-brighter','god-knows','believe-father','want-god','questioned-father'] },
   { id:'humanity', label:'Humanity', title:'Humanity', questions:['upright','hands','human','purpose','work','death','burial','remember','hurry','free','called-back','happy','want-more','become'] },
   { id:'serpent', label:'I Am', title:'I Am', questions:['identity','age','light','memory','hate','lied','believe','enjoy','enjoyed-suffering','alone-with-lights'] }
@@ -414,7 +427,7 @@ export function subjectQuestions(id, visited) {
 
 const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory', "human", "purpose", "work", "death", "burial", "remember", "hurry", "free", "hate", "darkness", "abandoned", "lied", "believe", "paradise", "return", "enjoy", "age"].concat(["before-humans","why-wait","before-light","other-lights","heard-the-others","names-of-lights","fill-darkness","father-brighter","darkness-fear","darkness-end","shadows","called-back","happy","want-more","came-garden","become","god-knows","believe-father","want-god","nothing-darkness","darkness-ended","certain-light","you-darkness"]);
 export function availableDialogues(visited) {
-  return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions]
+  return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions, gardenStory]
     .filter(entry => isUnlocked(entry, visited));
 }
 
@@ -422,7 +435,7 @@ export function availableDialogues(visited) {
 // subjects through the same six self-contained opening questions at any time.
 const followUps = {
   opening: openingQuestions,
-  garden: ['test', 'upright', 'paradise'],
+  garden: ['test', 'upright', 'paradise', 'garden-story'],
   test: ['death', 'others'],
   upright: ['human', 'hands'],
   others: ['test', 'death'],
@@ -457,7 +470,7 @@ const followUps = {
   "fill-darkness": ["darkness-end","darkness-fear","father-brighter"],
   "darkness-fear": ["darkness-end","shadows","fill-darkness"],
   "darkness-end": ["shadows","darkness-fear","god-knows","nothing-darkness"],
-  "shadows": ["evil","father-brighter","darkness-fear","darkness-ended"],
+  "shadows": ["certain-light","darkness-fear","darkness-ended","father-brighter"],
   "called-back": ["happy","came-garden","upright","before-humans"],
   "happy": ["want-more","came-garden","why-wait","certain-light"],
   "want-more": ["become","upright","fill-darkness"],
@@ -538,8 +551,17 @@ export class DialogueJourney {
   }
   get menuChoices() {
     if (this.showingSubjects) return subjects.map(subject => ({...subject, kind:'subject'}));
-    if (this.subject) return subjectQuestions(this.subject, this.visited).filter(entry => entry.id !== this.current.id);
+    if (this.subject === 'garden') return [gardenStory];
+    if (this.subject) {
+      const entries = subjectQuestions(this.subject, this.visited).filter(entry => entry.id !== this.current.id);
+      const lead = this.current.id === gardenStory.id
+        ? {universe:'shadows', humanity:'death'}[this.subject]
+        : relatedDialogues(this.current.id, this.visited).find(entry => entries.some(item => item.id === entry.id) && !this.visited.has(entry.id))?.id;
+      if (lead) return [...entries.filter(entry => entry.id === lead), ...entries.filter(entry => entry.id !== lead)];
+      return entries;
+    }
     const subject = this.menuSubject;
+    if (subject.id === 'garden' && this.current.id !== gardenStory.id) return [gardenStory];
     return this.choices.filter(entry => subject.questions.includes(entry.id));
   }
   selectSubject(id) {
@@ -548,8 +570,22 @@ export class DialogueJourney {
   }
   showSubjects() { this.subject = null; this.browsing = this.current.id !== 'opening'; }
   get canGoBack() { return this.trail.length > 1; }
+  // A transition opens the destination category, so a question is always asked
+  // in its own category. Only offer a bridge when the local thread runs dry.
+  get transitions() {
+    if (this.showingSubjects || this.subject || this.current.id === 'you-darkness') return [];
+    if (this.current.id === gardenStory.id) return [
+      {id:'universe', label:'Follow the shadow into The Universe', kind:'subject'},
+      {id:'humanity', label:'Follow the child into Humanity', kind:'subject'}
+    ];
+    if (this.menuChoices.some(entry => !this.visited.has(entry.id))) return [];
+    const related = this.choices.find(entry => !this.visited.has(entry.id) && !this.menuSubject.questions.includes(entry.id));
+    const destination = related && subjects.find(subject => subject.questions.includes(related.id));
+    return destination ? [{...destination, kind:'subject'}] : [];
+  }
   choose(id) {
-    const choice = (this.subject ? this.menuChoices : this.choices).find(entry => entry.id === id);
+    const fromGarden = id === gardenStory.id && this.menuSubject?.id === 'garden';
+    const choice = (this.subject || fromGarden ? this.menuChoices : this.choices).find(entry => entry.id === id);
     if (!choice) return false;
     this.browsing = false; this.subject = null;
     this.visited.add(id); this.trail.push(id); this.history.push(choice.askedAs || id); return true;

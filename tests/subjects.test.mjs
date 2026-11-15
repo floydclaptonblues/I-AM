@@ -7,7 +7,7 @@ test('every question belongs to one subject and fresh subjects expose only groun
   assert.equal(new Set(ids).size, ids.length);
   assert.deepEqual([...ids].sort(), dialogues.map(entry => entry.id).sort());
   assert.deepEqual(subjects.flatMap(subject => subjectQuestions(subject.id,new Set()).map(entry => entry.id)).sort(),
-    ['identity','age','garden','evil','upright','before-humans'].sort());
+    ['identity','age','garden','garden-story','evil','upright','before-humans'].sort());
 });
 
 test('subject navigation preserves the answer and never unlocks or records a discovery', () => {
@@ -15,16 +15,16 @@ test('subject navigation preserves the answer and never unlocks or records a dis
   assert.deepEqual(journey.menuChoices.map(entry => entry.label), subjects.map(subject => subject.label));
   journey.selectSubject('garden');
   assert.equal(journey.current.id,'opening'); assert.equal(journey.history.length,0);
-  assert.deepEqual(journey.menuChoices.map(entry => entry.id),['garden']);
+  assert.deepEqual(journey.menuChoices.map(entry => entry.id),['garden-story']);
   assert.equal(journey.choose('test'),false);
-  journey.choose('garden'); journey.choose('test');
+  journey.choose('garden-story');
   const before = journey.snapshot();
   journey.showSubjects(); journey.selectSubject('universe');
-  assert.equal(journey.current.id,'test');
+  assert.equal(journey.current.id,'garden-story');
   assert.deepEqual(journey.history,before.history); assert.deepEqual(journey.trail,before.trail);
   assert.ok(journey.choose('before-humans')); assert.equal(journey.subject,null);
   assert.equal(journey.menuChoices[0].id,'other-lights');
-  journey.back(); assert.equal(journey.current.id,'test');
+  journey.back(); assert.equal(journey.current.id,'garden-story');
 });
 
 test('selected subjects survive saves without changing old conversation saves', () => {
@@ -58,13 +58,14 @@ test('all exchanges are reachable through subjects while late revelations remain
       journey.selectSubject(subject.id);
       const next = journey.menuChoices.find(entry => !journey.visited.has(entry.id));
       if (!next) continue;
-      if (next.id==='certain-light') for (const id of ['identity','age','happy','darkness-ended']) assert.ok(journey.visited.has(id));
+      if (next.id==='certain-light' && !journey.visited.has('shadows')) for (const id of ['identity','age','happy','darkness-ended']) assert.ok(journey.visited.has(id));
       if (next.id==='you-darkness') assert.ok(journey.visited.has('certain-light'));
       assert.ok(journey.choose(next.id)); changed=true;
     }
     if (!changed) break;
   }
-  assert.equal(journey.visited.size,dialogues.length);
+  const legacyGarden = subjects.find(subject => subject.id === 'garden').questions.filter(id => id !== 'garden-story');
+  assert.deepEqual([...journey.visited].sort(), dialogues.map(entry => entry.id).filter(id => !legacyGarden.includes(id)).sort());
   assert.ok(new DialogueJourney().restore(journey.snapshot()));
 });
 
@@ -73,11 +74,35 @@ test('after every answer the follow-up menu contains only questions from its own
   for (const entry of dialogues) journey.visited.add(entry.id);
   for (const subject of subjects) {
     for (const id of subject.questions) {
+      if (subject.id === 'garden' && id !== 'garden-story') continue;
       journey.selectSubject(subject.id);
       assert.ok(journey.choose(id));
       assert.equal(journey.menuSubject.id,subject.id);
       const expected = journey.choices.filter(entry => subject.questions.includes(entry.id));
       assert.deepEqual(journey.menuChoices.map(entry => entry.id),expected.map(entry => entry.id));
     }
+  }
+});
+
+test('the Garden memory leads to either the grave or the serpent’s shadow', () => {
+  for (const [subject, lead] of [['humanity','death'], ['universe','shadows']]) {
+    const journey = new DialogueJourney();
+    journey.selectSubject('garden');
+    assert.ok(journey.choose('garden-story'));
+    assert.deepEqual(journey.menuChoices, []);
+    assert.deepEqual(journey.transitions.map(item => item.id), ['universe','humanity']);
+    journey.selectSubject(subject);
+    assert.equal(journey.menuChoices[0].id, lead);
+    assert.ok(journey.choose(lead));
+    if (lead === 'shadows') {
+      for (const next of ['certain-light','you-darkness']) {
+        assert.equal(journey.menuChoices[0].id, next);
+        assert.ok(journey.choose(next));
+      }
+      assert.equal(journey.current.text, 'Who told you to ask me that?');
+    }
+    const resumed = new DialogueJourney();
+    assert.ok(resumed.restore(journey.snapshot()));
+    assert.deepEqual(resumed.transcript, journey.transcript);
   }
 });

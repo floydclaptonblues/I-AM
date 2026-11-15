@@ -118,12 +118,12 @@ test('every answer speaks all of its sentences to completion', () => {
       s.utterances[index].onstart(); s.utterances[index].onend();
       if(s.states.at(-1)==='between') s.advance();
     }
-    assert.equal(s.sentences.join(' '),entry.text,entry.id);
+    assert.equal(s.sentences.join(' '),entry.text.replace(/\s+/g,' '),entry.id);
     assert.equal(s.states.at(-1),'finished',entry.id);
   }
 });
 test('the three original themes and both expansions are present', () => {
-  assert.equal(dialogues.length, 52);
+  assert.equal(dialogues.length, 53);
   assert.match(dialogues[0].text, /ate what ate the food you desired/);
   assert.match(dialogues[1].text, /not out of respect/);
   assert.match(dialogues[2].text, /I am solipsism/);

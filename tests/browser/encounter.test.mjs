@@ -132,10 +132,10 @@ test('keyboard focus receives one complete answer; speech never replaces or rear
 });
 
 test('speech failure retains the complete answer and releases controls',async t=>{
-  const page=await open(t,{muted:false});await choose(page,'garden');await choose(page,'test');
+  const page=await open(t,{muted:false});await page.locator('[data-subject="garden"]').click();
   await page.waitForFunction(()=>testTracks.length>0);
   await page.evaluate(()=>testTracks.at(-1).dispatchEvent(new Event('error')));
-  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='test').text);
+  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden-story').text);
   assert.equal(await page.locator('#stop').isDisabled(),true);
 });
 
@@ -238,8 +238,7 @@ test('visitors can change subjects without losing the answer or conversation', a
   const page=await open(t,{width:320,height:568});
   assert.deepEqual(await page.locator('#question-list button').evaluateAll(nodes=>nodes.map(node=>node.dataset.subject)),
     ['universe','garden','god','humanity','serpent']);
-  await choose(page,'garden');
-  await choose(page,'test');
+  await page.locator('[data-subject="garden"]').click();
   const previous=await page.locator('#answer-accessible').textContent();
   await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
   assert.equal(await page.locator('#answer-accessible').textContent(),previous);
@@ -250,7 +249,7 @@ test('visitors can change subjects without losing the answer or conversation', a
   await page.getByRole('button',{name:'Return to follow-up questions',exact:true}).click();
   assert.equal(await page.locator('#subject-title').textContent(),'The Garden');
   assert.equal(await page.locator('[data-question="death"]').count(),0);
-  assert.equal(await page.locator('[data-question="others"]').count(),1);
+  assert.equal(await page.locator('[data-subject="humanity"]').count(),1);
   await page.getByRole('button',{name:'Ask about something else',exact:true}).click();
   await choose(page,'before-humans');
   assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='before-humans').text);
@@ -259,7 +258,7 @@ test('visitors can change subjects without losing the answer or conversation', a
   assert.equal(await page.locator('#answer-accessible').textContent(),previous);
   assert.equal(await page.locator('#subject-title').textContent(),'The Garden');
   assert.equal(await page.locator('[data-question="death"]').count(),0);
-  assert.equal(await page.locator('[data-question="others"]').count(),1);
+  assert.equal(await page.locator('[data-subject="humanity"]').count(),1);
   const focusBounds=await page.evaluate(()=>({
     question:document.activeElement.getBoundingClientRect().top,
     portrait:document.querySelector('.upper-deck').getBoundingClientRect().bottom
@@ -288,9 +287,8 @@ test('subject menus work with number keys, preserve the answer, and restore afte
   await page.keyboard.press('2');
   assert.equal(await page.locator('#subject-title').textContent(),'The Garden');
   assert.equal(await page.locator('[data-question="test"]').count(),0);
-  await page.keyboard.press('1');
-  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden').text);
-  assert.equal(await page.locator('[data-question="test"]').count(),1);
+  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden-story').text);
+  assert.equal(await page.locator('[data-subject="universe"]').count(),1);
   assert.equal(await page.evaluate(()=>document.activeElement.id),'caption');
 });
 
@@ -298,10 +296,10 @@ test('subject menus work with number keys, preserve the answer, and restore afte
 for (const width of [390,1366]) {
   test('real David audio plays, stops and replays at width '+width,async t=>{
     const page=await open(t,{width,height:844,muted:false,mock:false,mobile:width===390});
-    await choose(page,'garden');
+    await page.locator('[data-subject="garden"]').click();
     await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return !a.paused&&a.currentTime>.2;});
     const source=await page.locator('#voice-track').evaluate(a=>({src:a.currentSrc,voice:a.dataset.voice,duration:a.duration}));
-    assert.match(source.src,/garden-[a-f0-9]+\.mp3$/);assert.equal(source.voice,'microsoft-david');assert.ok(source.duration>2);
+    assert.match(source.src,/garden-story-[a-f0-9]+\.mp3$/);assert.equal(source.voice,'microsoft-david');assert.ok(source.duration>2);
     assert.ok(await page.locator('.spoken-sentence').count());
     await page.waitForFunction(()=>['partial','open'].includes(document.getElementById('portrait').dataset.mouth));
     await page.locator('#stop').click();
@@ -311,23 +309,23 @@ for (const width of [390,1366]) {
     await page.waitForFunction(()=>document.getElementById('voice-track').currentTime>.2);
     await page.locator('#mute').click();
     assert.equal(await page.locator('#voice-track').evaluate(a=>a.paused),true);
-    assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden').text);
+    assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden-story').text);
   });
 }
 test('unavailable recording keeps complete text without selecting a device voice',async t=>{
   const page=await open(t,{muted:false,mock:false});
   await page.route('**/assets/audio/*.mp3',route=>route.abort());
-  await choose(page,'garden');
+  await page.locator('[data-subject="garden"]').click();
   await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Voice unavailable.'));
   assert.equal(await page.locator('#stop').isDisabled(),true);
-  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden').text);
+  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden-story').text);
 });
 
 test('mobile jaw follows jumps in audio time, holds vowels, and closes for silence or buffering',async t=>{
   const page=await open(t,{width:390,height:844,mobile:true,muted:false});
-  await choose(page,'garden');await page.waitForFunction(()=>testTracks.length>0);
+  await page.locator('[data-subject="garden"]').click();await page.waitForFunction(()=>testTracks.length>0);
   const manifest=JSON.parse(await readFile(new URL('../../assets/audio/manifest.json',import.meta.url),'utf8'));
-  const clip=manifest.clips.garden,levels=Buffer.from(clip.mouth.levels,'base64');
+  const clip=manifest.clips['garden-story'],levels=Buffer.from(clip.mouth.levels,'base64');
   const loud=levels.findIndex(value=>value>210)*clip.mouth.step;
   const quiet=levels.findIndex((value,i)=>i>10&&value===0&&levels[i-1]===0&&levels[i+1]===0)*clip.mouth.step;
   assert.ok(loud>0&&quiet>0);
@@ -347,4 +345,19 @@ test('mobile jaw follows jumps in audio time, holds vowels, and closes for silen
   assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'open');
   await page.locator('#stop').click();
   assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
+});
+
+test('a fresh visitor can follow the shadow from the Garden to the held gaze',async t=>{
+  const page=await open(t,{width:390,height:844,mobile:true});
+  await page.getByRole('button',{name:'The Garden',exact:true}).click();
+  assert.equal(await page.locator('#answer-accessible').textContent(),dialogues.find(d=>d.id==='garden-story').text);
+  assert.equal(await page.locator('#question-list [data-question]').count(),0);
+  await page.getByRole('button',{name:'Follow the shadow into The Universe',exact:true}).click();
+  for(const id of ['shadows','certain-light','you-darkness']){
+    const first=page.locator('#question-list button').first();
+    assert.equal(await first.getAttribute('data-question'),id);
+    await first.click();
+  }
+  assert.equal(await page.locator('#answer-accessible').textContent(),'');
+  await page.waitForFunction(()=>document.getElementById('answer-accessible').textContent==='Who told you to ask me that?');
 });

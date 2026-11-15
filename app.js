@@ -1,7 +1,7 @@
-import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=category-1';
-import { loadSession, saveSession } from './session.js?v=category-1';
+import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=garden-tale-1';
+import { loadSession, saveSession } from './session.js?v=garden-tale-1';
 import { FirstVisitGreeting } from './speech.js?v=immersion-1';
-import { RecordedNarrator } from './recorded-voice.js?v=heard-1';
+import { RecordedNarrator } from './recorded-voice.js?v=garden-tale-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
 import { Portrait } from './portrait.js?v=mouth-1';
@@ -65,7 +65,9 @@ function play({ focus = false } = {}) {
 function choose(entry) {
   if (entry.kind === 'subject') {
     cancelGreeting(); stopResponse(); showText(current.text);
-    journey.selectSubject(entry.id); renderChoices({ focus:true });
+    journey.selectSubject(entry.id);
+    if (entry.id === 'garden') { choose(journey.menuChoices[0]); return; }
+    renderChoices({ focus:true });
     $('status').textContent = 'Questions about ' + subjects.find(subject => subject.id === entry.id).title.toLowerCase() + '.';
     remember(); return;
   }
@@ -83,7 +85,7 @@ function remember() {
 }
 function renderChoices({ focus = false, focusId = null } = {}) {
   const fragment = document.createDocumentFragment();
-  journey.menuChoices.forEach((entry,index) => {
+  [...journey.menuChoices, ...journey.transitions].forEach((entry,index) => {
     const li = document.createElement('li'), button = document.createElement('button');
     const number = document.createElement('span'); number.className='choice-number'; number.textContent = String(index+1)+'.'; number.setAttribute('aria-hidden','true');
     const label = document.createElement('span'); label.textContent = questionLabel(entry);
@@ -197,7 +199,7 @@ $('confirm-restart').addEventListener('click', () => {
 document.addEventListener('keydown',event=>{
   if($('review-dialog').open || $('restart-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
   if(/^[1-9]$/.test(event.key)){
-    const entry=journey.menuChoices[Number(event.key)-1];if(entry && !heldResponse.active){event.preventDefault();choose(entry);}
+    const entry=[...journey.menuChoices,...journey.transitions][Number(event.key)-1];if(entry && !heldResponse.active){event.preventDefault();choose(entry);}
   }else if(event.key==='Escape'){cancelGreeting();stopResponse();showText(current.text);}
 });
 document.addEventListener('visibilitychange',()=>{
