@@ -63,7 +63,6 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible {
   border: 3px solid #1a1918;
   box-shadow: inset 2px 2px 1px #88837e,inset -3px -3px 1px #171716,0 3px 0 #090909,0 20px 65px #000000bb;
   padding: 0 15px 5px;
-  animation: power-on .35s steps(5);
 }
 
 .console::before,.console::after {
@@ -756,7 +755,6 @@ dialog header,dialog article {
   min-height: 84px;
 }
 
-@keyframes power-on{from{opacity:0;filter:brightness(.5)}to{opacity:1;filter:brightness(1)}}
 @keyframes idle-drift{0%,100%{transform:translate(0,0)}42%{transform:translate(1px,1px)}73%{transform:translate(-1px,0)}}
 @keyframes interference{0%,96%,98%,100%{opacity:0}97%{opacity:.035}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important;transition:none!important}.portrait{transform:none!important}}
@@ -817,3 +815,7 @@ dialog header,dialog article {
 .choices-frame:has(.subject-title:not([hidden])) { display: grid; grid-template-columns: 1fr auto; align-items: center; }
 .choices-frame:has(.subject-title:not([hidden])) ol { grid-column: 1 / -1; }
 .subject-title:not([hidden]) + .question-navigation { margin: 0; padding: 0; border: 0; }
+
+@media (max-width: 650px) {
+  #encounter:has(.subject-title:not([hidden])) .upper-deck { position: relative; }
+}
