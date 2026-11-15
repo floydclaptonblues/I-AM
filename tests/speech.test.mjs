@@ -126,7 +126,7 @@ test('the three original themes and both expansions are present', () => {
   assert.equal(dialogues.length, 60);
   assert.match(dialogues[0].text, /ate what ate the food you desired/);
   assert.match(dialogues[1].text, /not out of respect/);
-  assert.match(dialogues[2].text, /I am solipsism/);
+  assert.doesNotMatch(dialogues[2].text, /solipsism/);
   assert.match(dialogues[3].text, /higher figs/); assert.match(dialogues[4].text, /sent them back into it/);
 });
 

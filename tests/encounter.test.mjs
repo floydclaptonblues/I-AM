@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { dialogues } from '../dialogue.js';
 import { Portrait } from '../portrait.js';
 
-test('all three core answers are unchanged from the deployed original', () => {
+test('all three core answers match the approved text', () => {
   const original = JSON.parse(readFileSync(new URL('./core-dialogue.json',import.meta.url),'utf8'));
   for(const id of ['garden','test','evil']) assert.equal(dialogues.find(d=>d.id===id).text, original[id]);
 });

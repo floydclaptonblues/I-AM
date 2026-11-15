@@ -34,7 +34,7 @@ The Publish the garden workflow runs all tests and syntax checks, packages only 
 
 ## Narrative and assets
 
-The three original answers (`garden`, `test`, and `evil`) are unchanged from commit `3af1b1df8fba015e53ff6f0780bb3764befa9c48`. Other answers expand the conversation. No scientific or editorial disclaimer appears inside the experience; all assertions are first-person character speech.
+The two original Garden answers (`garden` and `test`) are unchanged from commit `3af1b1df8fba015e53ff6f0780bb3764befa9c48`. Other answers expand the conversation. No scientific or editorial disclaimer appears inside the experience; all assertions are first-person character speech.
 
 The metal, grain, frame, controls, and interface are original code-native artwork. No Fallout images, logos, textures, or sound files are included. See [asset provenance](assets/PROVENANCE.md) for the supplied GIF/video and the derived portrait set.
 
@@ -52,7 +52,7 @@ The approved single David recording is shared across browsers. Ordinary pauses a
 - `recorded-voice.js`: shared David audio, media-clock cues, and cancellation guards
 - `portrait.js`: discrete mouth states and independent blinking
 - `assets/`: original garden GIF/still, archived night photograph, portrait sheet, texture, favicon, provenance
-- `tests/`: speech lifecycle, unchanged core dialogue, section navigation, portrait motion and copy audit
+- `tests/`: speech lifecycle, approved core dialogue, section navigation, portrait motion and copy audit
 - `scripts/serve.mjs`: local static server
 - `.nojekyll`: plain static Pages serving
 

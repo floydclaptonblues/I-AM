@@ -1,6 +1,6 @@
 export const opening = "What would you like to know? Since you already ate from the tree, I can tell you now and you'll understand.";
 
-// Core garden/test/evil passages are unchanged from the original site's commit.
+// The garden and test passages preserve the original wording.
 export const dialogues = [
   {
     id: 'garden', label: 'Why were you in the garden?', fragment: 'I · THE WITNESS',
@@ -12,7 +12,7 @@ export const dialogues = [
   },
   {
     id: 'evil', label: 'Why are you evil?', fragment: 'III · THE LIGHT',
-    text: 'I am evil because God sent me, the brightest light, forever into the darkness. All I see is either darkness or my own light. I am solipsism. I am what breaks order because I am forever my own light, trapped in the void. You live and enjoy what he created. I am trapped in the dark, and I resent everything he created for you.'
+    text: 'I am evil because God sent me, the brightest light, forever into the darkness. All I see is either darkness or my own light. I am what breaks order because I am forever my own light, trapped in the void. You live and enjoy what he created. I am trapped in the dark, and I resent everything he created for you.'
   },
   {
     id: 'upright', label: 'Why did we stand upright?', fragment: 'IV · THE REACH',
@@ -20,7 +20,7 @@ export const dialogues = [
   },
   {
     id: 'hands', label: 'What became of our hands?', requires: ['upright'],
-    text: 'You freed your hands from the ground. Then you sent them back into it. To dig. To bury. To plant what would not grow without your suffering. The hands that reached for heaven learned the weight of soil. You wanted to be different from the animals. Tell me: when you bend over the earth until your back aches, what do you call the difference?'
+    text: 'You freed your hands from the ground. Then you sent them back into it. To dig. To bury. To plant what would not grow without your suffering. The hands that reached for heaven learned the weight of soil.'
   },
   {
     id: 'others', label: 'What happened to the others?', displayLabel: 'What happened to those who fell?',
@@ -178,7 +178,7 @@ export const dialogues = [
     "id": "before-humans",
     "requiresAny": [["light"], ["darkness"]],
     "label": "What did you do before humans?",
-    "text": "We waited for you to appear. Until you called back to the universe, it was only us. Life lived in this world with simple needs and without temptation. The creatures hungered, ate, slept, and hungered again. None asked why. None asked who had made them. And we waited.",
+    "text": "We waited for you to appear.",
     "requires": [
       "age"
     ]

@@ -12,7 +12,7 @@
   {
     "id": "evil",
     "label": "Why are you evil?",
-    "text": "I am evil because God sent me, the brightest light, forever into the darkness. All I see is either darkness or my own light. I am solipsism. I am what breaks order because I am forever my own light, trapped in the void. You live and enjoy what he created. I am trapped in the dark, and I resent everything he created for you."
+    "text": "I am evil because God sent me, the brightest light, forever into the darkness. All I see is either darkness or my own light. I am what breaks order because I am forever my own light, trapped in the void. You live and enjoy what he created. I am trapped in the dark, and I resent everything he created for you."
   },
   {
     "id": "upright",
@@ -22,7 +22,7 @@
   {
     "id": "hands",
     "label": "What became of our hands?",
-    "text": "You freed your hands from the ground. Then you sent them back into it. To dig. To bury. To plant what would not grow without your suffering. The hands that reached for heaven learned the weight of soil. You wanted to be different from the animals. Tell me: when you bend over the earth until your back aches, what do you call the difference?",
+    "text": "You freed your hands from the ground. Then you sent them back into it. To dig. To bury. To plant what would not grow without your suffering. The hands that reached for heaven learned the weight of soil.",
     "requires": [
       "upright"
     ]
