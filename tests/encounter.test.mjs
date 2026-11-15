@@ -9,7 +9,7 @@ test('six self-contained opening questions and conditional follow-ups stay in a 
   assert.ok(availableDialogues(new Set(['upright'])).some(d=>d.id==='hands'));
   assert.ok(!availableDialogues(new Set(['evil'])).some(d=>d.id==='memory'));
   assert.ok(availableDialogues(new Set(['evil','identity'])).some(d=>d.id==='memory'));
-  assert.equal(availableDialogues(new Set(dialogues.map(d=>d.id))).length, 55);
+  assert.equal(availableDialogues(new Set(dialogues.map(d=>d.id))).length, 57);
 });
 test('every exchange is reachable through valid question prerequisites', () => {
   const ids = new Set(dialogues.map(d=>d.id));

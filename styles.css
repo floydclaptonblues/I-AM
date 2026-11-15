@@ -813,5 +813,5 @@ dialog header,dialog article {
 
 #answer-visual, #history p { white-space: pre-line; }
 
-#universe-menu-note { margin: 0 8px 8px; }
-.held-gaze #universe-menu-note { display: none; }
+#section-menu-note { margin: 0 8px 8px; }
+.held-gaze #section-menu-note { display: none; }

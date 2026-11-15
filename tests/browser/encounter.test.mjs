@@ -371,13 +371,44 @@ test('Universe ends a thread at its remaining questions, also after refresh and 
     'If you couldn’t see beyond your own light, how did you know the others were there?', 'What did the other lights sound like?']) {
     await page.getByRole('button',{name,exact:true}).click();
   }
-  assert.equal(await page.locator('#universe-menu-note').innerText(),'Main questions');
+  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
   const remaining = await page.locator('#question-list [data-question]').evaluateAll(buttons => buttons.map(b => b.dataset.question));
   assert.deepEqual(remaining, ['before-light','why-wait','names-of-lights']);
   await page.reload();
-  assert.equal(await page.locator('#universe-menu-note').isVisible(),true);
+  assert.equal(await page.locator('#section-menu-note').isVisible(),true);
   await page.getByRole('button',{name:'Go back to the previous questions'}).click();
   assert.equal(await page.locator('[data-question="voices-of-lights"]').count(),0);
   await page.getByRole('button',{name:'Did the other lights have names?'}).click();
   assert.match(await page.locator('#answer-accessible').textContent(),/^You gave them names/);
+});
+
+test('God returns to its unanswered main questions after the serpent describes putting out his light',async t=>{
+  const page=await open(t,{width:390,height:844,mobile:true,muted:false,mock:false});
+  const ask=name=>page.getByRole('button',{name,exact:true}).click();
+  await ask('God');
+  await ask('What do you hold against God?');
+  await ask('What was it like where God sent you?');
+  await ask('Did God abandon you?');
+  await ask('If you could put out your light, would you?');
+  await page.waitForFunction(()=>{const audio=document.getElementById('voice-track');return audio.currentSrc.includes('/quiet-light-')&&audio.currentTime>.15;});
+  const buttons=page.locator('#question-list [data-question]');
+  assert.deepEqual(await buttons.evaluateAll(items=>items.map(item=>item.dataset.question)),['father-brighter']);
+  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
+  assert.match(await page.locator('#answer-accessible').textContent(),/^For one breath/);
+  await page.reload();
+  assert.deepEqual(await buttons.evaluateAll(items=>items.map(item=>item.dataset.question)),['father-brighter']);
+  await ask('Go back to the previous questions');
+  assert.equal(await page.locator('[data-question="quiet-light"]').count(),0);
+  await ask('Was God’s light brighter than yours?');
+  await ask('Does God know what lies in the darkness?');
+  await ask('Do you believe him?');
+  await ask('What do you want from God?');
+  await ask('Would an answer be enough for you now?');
+  await page.waitForFunction(()=>{const audio=document.getElementById('voice-track');return audio.currentSrc.includes('/say-my-name-')&&audio.currentTime>.15;});
+  assert.equal(await buttons.count(),0);
+  assert.equal(await page.locator('#section-menu-note').innerText(),'You’ve asked all the God questions available here.');
+  assert.match(await page.locator('#answer-accessible').textContent(),/^Let him say my name first/);
+  await ask('Ask about something else');
+  await ask('God');
+  assert.equal(await buttons.count(),0);
 });

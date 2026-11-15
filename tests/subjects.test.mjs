@@ -7,7 +7,7 @@ test('every question belongs to one subject and fresh subjects expose only groun
   assert.equal(new Set(ids).size, ids.length);
   assert.deepEqual([...ids].sort(), dialogues.map(entry => entry.id).sort());
   assert.deepEqual(subjects.flatMap(subject => subjectQuestions(subject.id,new Set()).map(entry => entry.id)).sort(),
-    ['identity','age','garden','garden-story','evil','upright','before-humans','before-light'].sort());
+    ['identity','age','garden','garden-story','evil','upright','before-humans','before-light','father-brighter'].sort());
 });
 
 test('subject navigation preserves the answer and never unlocks or records a discovery', () => {
@@ -75,11 +75,11 @@ test('after every answer the follow-up menu contains only questions from its own
   for (const subject of subjects) {
     for (const id of subject.questions) {
       if (subject.id === 'garden' && id !== 'garden-story') continue;
-      if (subject.id === 'universe') journey.visited.delete(id);
+      if (['universe','god'].includes(subject.id)) journey.visited.delete(id);
       journey.selectSubject(subject.id);
       assert.ok(journey.choose(id));
       assert.equal(journey.menuSubject.id,subject.id);
-      if (subject.id === 'universe') {
+      if (['universe','god'].includes(subject.id)) {
         assert.deepEqual(journey.menuChoices, []);
         continue;
       }
@@ -133,5 +133,36 @@ test('every Universe question is reachable once, even when branches are taken in
     assert.equal(journey.history.length, universe.questions.length);
     journey.showSubjects(); journey.selectSubject('universe');
     assert.deepEqual(journey.menuChoices, []);
+  }
+});
+
+test('God threads exhaust both orders, preserve a missed fork, and unlock the father challenge only after both claims', () => {
+  const god = subjects.find(subject => subject.id === 'god');
+  for (const lastFirst of [true,false]) {
+    let journey = new DialogueJourney();
+    journey.selectSubject('god');
+    assert.deepEqual(journey.menuChoices.map(entry => entry.id), ['evil','father-brighter']);
+    while (journey.menuChoices.length) {
+      assert.deepEqual(journey.transitions, []);
+      assert.ok(journey.menuChoices.every(entry => !journey.visited.has(entry.id) && god.questions.includes(entry.id)));
+      const next = lastFirst ? journey.menuChoices.at(-1) : journey.menuChoices[0];
+      assert.ok(journey.choose(next.id));
+      assert.equal(journey.choose(next.id),false);
+      const saved = new DialogueJourney();
+      assert.ok(saved.restore(journey.snapshot()));
+      assert.deepEqual(saved.transcript,journey.transcript);
+      assert.deepEqual(saved.menuChoices,journey.menuChoices);
+      journey = saved;
+    }
+    assert.deepEqual([...journey.visited].sort(),god.questions.filter(id => id !== 'questioned-father').sort());
+    assert.ok(journey.atSectionMain);
+    journey.selectSubject('universe'); assert.ok(journey.choose('before-light'));
+    journey.selectSubject('god'); assert.deepEqual(journey.menuChoices,[]);
+    journey.selectSubject('universe'); assert.ok(journey.choose('before-humans'));
+    journey.selectSubject('humanity'); assert.ok(journey.choose('called-back'));
+    journey.selectSubject('god');
+    assert.deepEqual(journey.menuChoices.map(entry => entry.id),['questioned-father']);
+    assert.ok(journey.choose('questioned-father'));
+    assert.deepEqual(journey.menuChoices,[]);
   }
 });
