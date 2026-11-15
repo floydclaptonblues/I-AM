@@ -10,8 +10,20 @@ test('the invitation leads to questions that require no prior story', () => {
     'Why are you evil?', 'What did you do before humans?', 'How old are you?'
   ]);
   assert.ok(journey.choose('before-humans'));
-  assert.equal(journey.choices[0].id, 'why-wait');
+  assert.equal(questionLabel(journey.choices[0]), 'Who else was waiting with you?');
+  assert.equal(journey.choices[1].id, 'why-wait');
   assert.ok(journey.choices.some(entry => entry.id === 'called-back'));
+  assert.ok(journey.choose(journey.choices[0].id));
+  assert.match(journey.current.text, /^There were others\. We were lights,/);
+  assert.ok(journey.choices.some(entry => entry.id === 'names-of-lights'));
+  const restored = new DialogueJourney();
+  assert.ok(restored.restore(journey.snapshot()));
+  assert.equal(restored.transcript.at(-1).question, 'Who else was waiting with you?');
+  assert.ok(restored.visited.has('other-lights'));
+  restored.back();
+  assert.ok(restored.choose('why-wait'));
+  assert.ok(restored.choose('other-lights'));
+  assert.equal(restored.transcript.at(-1).question, 'Were you alone?');
 });
 
 test('the fruit and fallen questions follow statements that make them meaningful', () => {

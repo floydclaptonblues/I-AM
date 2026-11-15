@@ -23,7 +23,7 @@ test('subject navigation preserves the answer and never unlocks or records a dis
   assert.equal(journey.current.id,'test');
   assert.deepEqual(journey.history,before.history); assert.deepEqual(journey.trail,before.trail);
   assert.ok(journey.choose('before-humans')); assert.equal(journey.subject,null);
-  assert.equal(journey.menuChoices[0].id,'why-wait');
+  assert.equal(journey.menuChoices[0].id,'other-lights');
   journey.back(); assert.equal(journey.current.id,'test');
 });
 

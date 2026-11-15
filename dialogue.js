@@ -206,6 +206,7 @@ export const dialogues = [
   {
     "id": "other-lights",
     "label": "Were you alone?",
+    "requiresAny": [["before-humans"]],
     "text": "There were others. We were lights, each illuminating what was near to us. Yet none could see beyond its own illumination. We spoke of what lay in the darkness. Some believed there was nothing. Others believed it was filled with things we had not been permitted to see. I believed there was more light to be made.",
     "requires": [
       "why-wait"
@@ -441,7 +442,7 @@ const followUps = {
   enjoy: ['age', 'hate'],
   light: ['darkness', 'memory', 'before-light', 'before-humans'],
   memory: ['darkness', 'abandoned'],
-  "before-humans": ["why-wait","called-back","age"],
+  "before-humans": ["other-lights","why-wait","called-back","age"],
   "why-wait": ["before-light","other-lights","fill-darkness","called-back"],
   "before-light": ["father-brighter","other-lights","fill-darkness"],
   "other-lights": ["names-of-lights","fill-darkness","before-light"],
@@ -468,9 +469,21 @@ const followUps = {
   'alone-with-lights': ['darkness', 'other-lights', 'memory']
 };
 
+// Two questions lead to the same revelation. Keep the wording the visitor
+// actually chose for Review, while counting the other lights as one discovery.
+const waitingCompany = {
+  ...dialogues.find(entry => entry.id === 'other-lights'),
+  displayLabel: 'Who else was waiting with you?',
+  askedAs: 'waiting-company'
+};
+function historyEntry(id) {
+  return id === waitingCompany.askedAs ? waitingCompany : dialogues.find(entry => entry.id === id);
+}
+
 export function relatedDialogues(currentId, visited) {
   const unlocked = new Map(availableDialogues(visited).map(entry => [entry.id, entry]));
   const related = (followUps[currentId] || []).map(id => unlocked.get(id)).filter(Boolean);
+  if (currentId === 'before-humans' && related[0]?.id === waitingCompany.id) related[0] = waitingCompany;
   // The alternate origin route still needs the original age discovery before the
   // final identity challenge. Give that visitor an organic way to ask who speaks.
   if (currentId === 'happy' && !visited.has('age')) related.push(unlocked.get('identity'));
@@ -485,9 +498,9 @@ export class DialogueJourney {
     if (!saved || !Array.isArray(saved.trail) || !Array.isArray(saved.history) || saved.trail[0] !== 'opening') return false;
     const visited = new Set();
     for (const id of saved.history) {
-      const entry = dialogues.find(item => item.id === id);
+      const entry = historyEntry(id);
       if (!entry || !isUnlocked(entry, visited)) return false;
-      visited.add(id);
+      visited.add(entry.id);
     }
     for (let index = 1; index < saved.trail.length; index++) {
       const id = saved.trail[index];
@@ -502,7 +515,7 @@ export class DialogueJourney {
   }
   get transcript() {
     return [{ text: opening }, ...this.history.map(id => {
-      const entry = dialogues.find(item => item.id === id);
+      const entry = historyEntry(id);
       return { question: questionLabel(entry), text: entry.text };
     })];
   }
@@ -523,9 +536,10 @@ export class DialogueJourney {
   showSubjects() { this.subject = null; this.browsing = this.current.id !== 'opening'; }
   get canGoBack() { return this.trail.length > 1; }
   choose(id) {
-    if (!(this.subject ? this.menuChoices : this.choices).some(entry => entry.id === id)) return false;
+    const choice = (this.subject ? this.menuChoices : this.choices).find(entry => entry.id === id);
+    if (!choice) return false;
     this.browsing = false; this.subject = null;
-    this.visited.add(id); this.trail.push(id); this.history.push(id); return true;
+    this.visited.add(id); this.trail.push(id); this.history.push(choice.askedAs || id); return true;
   }
   back() { this.subject = null; this.browsing = false; if (this.canGoBack) this.trail.pop(); }
   firstQuestions() { this.subject = null; this.browsing = false; this.trail = ['opening']; }

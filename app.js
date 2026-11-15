@@ -1,5 +1,5 @@
-import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=subjects-2';
-import { loadSession, saveSession } from './session.js?v=subjects-2';
+import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=waiting-1';
+import { loadSession, saveSession } from './session.js?v=waiting-1';
 import { FirstVisitGreeting } from './speech.js?v=immersion-1';
 import { RecordedNarrator } from './recorded-voice.js?v=mouth-1';
 import { AnswerView } from './answer.js?v=immersion-1';
