@@ -25,7 +25,7 @@ export class RecordedNarrator {
       const controller = new AbortController();
       const timeout = this.setTimer(() => controller.abort(),8000);
       try {
-        const response = await this.fetch('assets/audio/manifest.json?v=garden-tale-1',{signal:controller.signal});
+        const response = await this.fetch('assets/audio/manifest.json?v=universe-threads-1',{signal:controller.signal});
         if (!response.ok) throw new Error('Voice catalog unavailable');
         const manifest = await response.json();
         if (manifest.version !== 3 || !manifest.clips) throw new Error('Invalid voice catalog');

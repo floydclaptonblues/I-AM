@@ -123,7 +123,7 @@ test('every answer speaks all of its sentences to completion', () => {
   }
 });
 test('the three original themes and both expansions are present', () => {
-  assert.equal(dialogues.length, 53);
+  assert.equal(dialogues.length, 55);
   assert.match(dialogues[0].text, /ate what ate the food you desired/);
   assert.match(dialogues[1].text, /not out of respect/);
   assert.match(dialogues[2].text, /I am solipsism/);

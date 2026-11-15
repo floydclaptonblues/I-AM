@@ -20,10 +20,7 @@ test('the invitation leads to questions that require no prior story', () => {
   assert.ok(restored.restore(journey.snapshot()));
   assert.equal(restored.transcript.at(-1).question, 'Who else was waiting with you?');
   assert.ok(restored.visited.has('other-lights'));
-  restored.back();
-  assert.ok(restored.choose('why-wait'));
-  assert.ok(restored.choose('other-lights'));
-  assert.equal(restored.transcript.at(-1).question, 'Were you alone?');
+  assert.equal(restored.choose('other-lights'), false);
   assert.equal(questionLabel(restored.menuChoices[0]), 'If you couldn’t see beyond your own light, how did you know the others were there?');
   assert.ok(restored.choose('heard-the-others'));
   assert.equal(restored.current.text, 'I hear and feel beyond your comprehension...');

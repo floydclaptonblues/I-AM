@@ -79,7 +79,8 @@ test('Back, saved progress, and repeat visits preserve late-stage choices', () =
   const restored = loadSession(() => storage).journey;
   assert.equal(restored.current.id, 'certain-light');
   assert.deepEqual(restored.transcript, journey.transcript);
-  assert.ok(restored.choose('you-darkness'));
+  assert.equal(restored.choose('you-darkness'), false);
+  assert.ok(!restored.menuChoices.some(entry => entry.id === 'you-darkness'));
   restored.reset();
   assert.equal(restored.visited.size, 0);
   assert.ok(!restored.choices.some(d => d.id === 'you-darkness'));

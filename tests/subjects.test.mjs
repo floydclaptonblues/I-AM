@@ -7,7 +7,7 @@ test('every question belongs to one subject and fresh subjects expose only groun
   assert.equal(new Set(ids).size, ids.length);
   assert.deepEqual([...ids].sort(), dialogues.map(entry => entry.id).sort());
   assert.deepEqual(subjects.flatMap(subject => subjectQuestions(subject.id,new Set()).map(entry => entry.id)).sort(),
-    ['identity','age','garden','garden-story','evil','upright','before-humans'].sort());
+    ['identity','age','garden','garden-story','evil','upright','before-humans','before-light'].sort());
 });
 
 test('subject navigation preserves the answer and never unlocks or records a discovery', () => {
@@ -75,9 +75,14 @@ test('after every answer the follow-up menu contains only questions from its own
   for (const subject of subjects) {
     for (const id of subject.questions) {
       if (subject.id === 'garden' && id !== 'garden-story') continue;
+      if (subject.id === 'universe') journey.visited.delete(id);
       journey.selectSubject(subject.id);
       assert.ok(journey.choose(id));
       assert.equal(journey.menuSubject.id,subject.id);
+      if (subject.id === 'universe') {
+        assert.deepEqual(journey.menuChoices, []);
+        continue;
+      }
       const expected = journey.choices.filter(entry => subject.questions.includes(entry.id));
       assert.deepEqual(journey.menuChoices.map(entry => entry.id),expected.map(entry => entry.id));
     }
@@ -104,5 +109,29 @@ test('the Garden memory leads to either the grave or the serpent’s shadow', ()
     const resumed = new DialogueJourney();
     assert.ok(resumed.restore(journey.snapshot()));
     assert.deepEqual(resumed.transcript, journey.transcript);
+  }
+});
+
+test('every Universe question is reachable once, even when branches are taken in reverse order', () => {
+  const universe = subjects.find(subject => subject.id === 'universe');
+  for (const pickLast of [false, true]) {
+    let journey = new DialogueJourney();
+    journey.selectSubject('universe');
+    assert.deepEqual(journey.menuChoices.map(entry => entry.id), ['before-humans','before-light']);
+    while (journey.menuChoices.length) {
+      const choices = journey.menuChoices;
+      assert.ok(choices.every(entry => !journey.visited.has(entry.id) && universe.questions.includes(entry.id)));
+      const next = pickLast ? choices.at(-1) : choices[0];
+      assert.ok(journey.choose(next.id));
+      assert.equal(journey.choose(next.id), false);
+      const restored = new DialogueJourney();
+      assert.ok(restored.restore(journey.snapshot()));
+      assert.deepEqual(restored.menuChoices, journey.menuChoices);
+      journey = restored;
+    }
+    assert.deepEqual([...journey.visited].sort(), [...universe.questions].sort());
+    assert.equal(journey.history.length, universe.questions.length);
+    journey.showSubjects(); journey.selectSubject('universe');
+    assert.deepEqual(journey.menuChoices, []);
   }
 });

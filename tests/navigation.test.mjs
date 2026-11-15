@@ -15,7 +15,7 @@ test('choice groups stay bounded even after the whole conversation is unlocked',
   }
 });
 
-test('all 53 answers remain reachable through the actual related-choice graph', () => {
+test('all 55 answers remain reachable through the actual related-choice graph', () => {
   const visited = new Set();
   const contexts = new Set(['opening']);
   for (let pass = 0; pass <= dialogues.length; pass++) {

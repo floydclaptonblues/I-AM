@@ -176,13 +176,13 @@ test('muted finale keeps face and response together, freezes the displayed frame
 });
 
 test('Stop, Back and restart clean up an interrupted finale without stale reveals',async t=>{
-  const page=await open(t,{route:finaleRoute});
   for(const action of ['stop','back','restart']) {
-    if(action!=='stop') await page.locator('#listen').click(); else await choose(page,'you-darkness');
+    const page=await open(t,{route:finaleRoute});
+    await choose(page,'you-darkness');
     if(action==='back') {
       await page.locator('#back-questions').click();
       assert.equal(await page.locator('#answer-accessible').textContent(),'What else would I be?');
-      await choose(page,'you-darkness');await page.locator('#stop').click();
+      assert.equal(await page.locator('[data-question="you-darkness"]').count(),0);
     } else if(action==='restart') {
       await page.locator('.utilities summary').click();await page.locator('#restart').click();
       assert.equal(await page.locator('body.held-gaze').count(),0);
@@ -191,9 +191,11 @@ test('Stop, Back and restart clean up an interrupted finale without stale reveal
     } else await page.locator('#stop').click();
     assert.equal(await page.locator('body.held-gaze').count(),0);
     assert.equal(await page.locator('#question-list').isVisible(),true);
+    if(action==='restart') {
+      await page.waitForTimeout(3300);
+      assert.equal(await page.locator('#answer-accessible').textContent(),opening);
+    }
   }
-  await page.waitForTimeout(3300);
-  assert.equal(await page.locator('#answer-accessible').textContent(),opening);
 });
 
 test('quiet spoken finale keeps mouth closed; failure and reduced motion release all temporary state',async t=>{
@@ -360,4 +362,22 @@ test('a fresh visitor can follow the shadow from the Garden to the held gaze',as
   }
   assert.equal(await page.locator('#answer-accessible').textContent(),'');
   await page.waitForFunction(()=>document.getElementById('answer-accessible').textContent==='Who told you to ask me that?');
+});
+
+test('Universe ends a thread at its remaining questions, also after refresh and Back', async t => {
+  const page = await open(t,{width:390,height:844,mobile:true});
+  await page.getByRole('button',{name:'The Universe',exact:true}).click();
+  for (const name of ['What did you do before humans?', 'Who else was waiting with you?',
+    'If you couldn’t see beyond your own light, how did you know the others were there?', 'What did the other lights sound like?']) {
+    await page.getByRole('button',{name,exact:true}).click();
+  }
+  assert.equal(await page.locator('#universe-menu-note').innerText(),'Main questions');
+  const remaining = await page.locator('#question-list [data-question]').evaluateAll(buttons => buttons.map(b => b.dataset.question));
+  assert.deepEqual(remaining, ['before-light','why-wait','names-of-lights']);
+  await page.reload();
+  assert.equal(await page.locator('#universe-menu-note').isVisible(),true);
+  await page.getByRole('button',{name:'Go back to the previous questions'}).click();
+  assert.equal(await page.locator('[data-question="voices-of-lights"]').count(),0);
+  await page.getByRole('button',{name:'Did the other lights have names?'}).click();
+  assert.match(await page.locator('#answer-accessible').textContent(),/^You gave them names/);
 });
