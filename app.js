@@ -102,7 +102,10 @@ function renderChoices({ focus = false, focusId = null } = {}) {
   $('subject-title').hidden = !menuSubject;
   $('subject-title').textContent = menuSubject?.title || '';
   $('questions').setAttribute('aria-label', menuSubject ? 'Questions about ' + menuSubject.title : 'Subjects to ask the serpent about');
-  $('question-navigation').hidden = !journey.canGoBack && !selectedSubject;
+  const navigation = $('question-navigation');
+  if (selectedSubject) $('question-list').before(navigation);
+  else $('question-list').after(navigation);
+  navigation.hidden = !journey.canGoBack && !selectedSubject;
   $('back-questions').setAttribute('aria-label', selectedSubject ? 'Return to subjects' : 'Go back to the previous answer');
   $('questions').scrollTop = 0;
   if (focus) {

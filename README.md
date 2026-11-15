@@ -45,20 +45,20 @@ The approved single David recording is shared across browsers. Ordinary pauses a
 - `index.html`: original console hardware, portrait window, response panel, choices, controls, Review dialog
 - `styles.css`: metal finish, responsive layout, ivory/gold typography and the brighter Eden background, restrained CRT effects
 - `app.js`: encounter state, transcripts, question selection, captions, sound/motion controls
-- `dialogue.js`: original answers, additional dialogue, unlock requirements
+- `dialogue.js`: original answers, section menus, transcript, and saved journey
 - `response.js`: cancellable silence and held gaze for the late response
 - `session.js`: versioned browser-local persistence with validation and graceful storage failures
 - `speech.js`: greeting lifecycle, pacing helper, and retained legacy narrator tests
 - `recorded-voice.js`: shared David audio, media-clock cues, and cancellation guards
 - `portrait.js`: discrete mouth states and independent blinking
 - `assets/`: original garden GIF/still, archived night photograph, portrait sheet, texture, favicon, provenance
-- `tests/`: speech lifecycle, unchanged core dialogue, unlock logic, portrait motion and copy audit
+- `tests/`: speech lifecycle, unchanged core dialogue, section navigation, portrait motion and copy audit
 - `scripts/serve.mjs`: local static server
 - `.nojekyll`: plain static Pages serving
 
 ## Validation and recovery
 
-`npm test` covers 85 cases including rapid switching, cancellation, failed speech, bounded startup retry, paused-engine recovery, full narration of all 51 answers, locked questions, reachability of every exchange, bounded related-choice groups, back/first navigation, current-group numbering, all three mouth states, independent blinking, reduced motion, all 22 supplied passages verbatim, all 26 earlier exchanges unchanged, existing-save compatibility, late-stage gates, repeatable held responses, and original-dialogue preservation. Syntax checks cover all application modules. Browser QA is performed against the published site when local preview policy prevents localhost access.
+The unit suite checks dialogue fidelity, all section questions in arbitrary order, saved progress, the compiled Garden, playback, portrait motion, and the held gaze.
 
 The original implementation remains at commit `3af1b1d`. The redesign is also retained on `codex/garden-dialogue-redesign`. To roll back, restore the desired commit through a normal revert or a new commit; do not force-push over unrelated work.
 
@@ -68,7 +68,7 @@ The console shell uses a nearly opaque charcoal surface so the metal remains sol
 
 ## Immersion remediation
 
-Light and darkness both offer Before Humans without an identity detour. The original age entrance also works. The final certainty question additionally requires age, preserving the original sixteen necessary discoveries even when the alternate entrance is used. The ambiguous Why label is displayed as Why did you wait for us?; its canonical answer is unchanged.
+
 
 `answer.js` owns stable answer text and visual highlighting. `background.js` decodes the original GIF into a canvas on browsers with ImageDecoder, retaining the exact displayed frame during the finale and resuming from it. Other browsers use pauseable WebM/MP4 video derived from that same GIF during the build, retaining the displayed video frame. Unsupported codecs or blocked autoplay retain a static poster. No original GIF or portrait asset is replaced. The finale brings the portrait and answer together and keeps subsequent choices hidden until delivery finishes; navigation and Stop remain usable. Muted replay can repeat the visual moment.
 
@@ -76,14 +76,14 @@ Speech pacing is baked into the recordings using the shared pacing helper: ordin
 
 Run `npm test` and `npm run check` without dependencies. Browser checks additionally require `npm install --no-save --package-lock=false --ignore-scripts playwright@1.56.1 axe-core@4.11.0` and `npx playwright install chromium`, then install ffmpeg and run `node scripts/prepare-background.mjs` and `node scripts/prepare-audio.mjs` before `npm run test:browser`. Set BASE_URL to inspect an existing server. The browser suite uses controlled media events, actual MP3 playback, six required viewport sizes, axe WCAG A/AA checks, and screenshots under test-results. It does not establish subjective voice quality or substitute for actual screen-reader and physical-device testing. Both working-branch verification and Pages publication run these checks.
 
-The original 55 unit cases are retained. Content counts now include the three additions; the First Light fixture still compares exactly its original 22 exchanges. The bounded-choice assertion retains the four ordinary-question limit and separately allows at most one paired-claim challenge. The old 1400 ms speech expectation is replaced by the requested shorter timing. Nine additional unit cases cover the new gates, persistence, exact reactions, alternate entrance, pacing, and text offsets.
 
 
-Subject checks cover complete question classification, context-sensitive availability, navigation without discoveries, saved menus, cross-subject history, and reachability with finale prerequisites. Browser checks also exercise number keys, category focus, refresh persistence and a 320 px subject list. All devices now use the approved single Microsoft David recording, described below.
+
+Browser checks exercise category focus, two-digit shortcuts, refresh persistence, and full menus on small screens.
 
 ## Consistent David voice
 
-The user-approved Microsoft David Desktop voice is recorded at SAPI pitch -6 and rate 0. Both desktop and mobile play the same files. There is no device-voice fallback: unavailable or blocked audio keeps the complete written answer and permits replay. The opening and all 51 answers are covered.
+The user-approved Microsoft David Desktop voice is recorded at SAPI pitch -6 and rate 0. Both desktop and mobile play the same files. There is no device-voice fallback: unavailable or blocked audio keeps the complete written answer and permits replay. The opening and all current responses have recordings.
 
 Lossless sources in `voice-source/` are compressed WAV files. `node scripts/prepare-audio.mjs` uses ffmpeg to create 64 kbit/s MP3s for deployment; source files and tooling are not published. Source names include a recording hash. CI checks the exact dialogue against the recording manifest before publication.
 

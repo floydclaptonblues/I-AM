@@ -813,3 +813,7 @@ dialog header,dialog article {
 
 #answer-visual, #history p { white-space: pre-line; }
 
+
+.choices-frame:has(.subject-title:not([hidden])) { display: grid; grid-template-columns: 1fr auto; align-items: center; }
+.choices-frame:has(.subject-title:not([hidden])) ol { grid-column: 1 / -1; }
+.subject-title:not([hidden]) + .question-navigation { margin: 0; padding: 0; border: 0; }
