@@ -482,9 +482,9 @@ function historyEntry(id) {
   return mainPhrasings.find(entry => entry.askedAs === id) || questionPhrasings.find(entry => entry.askedAs === id) || dialogues.find(entry => entry.id === id);
 }
 
-export function subjectQuestions(id, visited) {
+export function subjectQuestions(id) {
   const subject = subjects.find(item => item.id === id);
-  return (subject?.questions || []).filter(key => !visited.has(key) || key === gardenStory.id).map(key =>
+  return (subject?.questions || []).map(key =>
     mainPhrasings.find(item => item.id === key) || questionPhrasings.find(item => item.id === key) || dialogues.find(item => item.id === key)
   );
 }
@@ -509,8 +509,7 @@ export class DialogueJourney {
       cursor++;
     }
     this.history = history; this.trail = trail; this.visited = visited;
-    this.subject = subjects.some(item => item.id === saved.subject && subjectQuestions(item.id, visited).length)
-      ? saved.subject : null;
+    this.subject = subjects.some(item => item.id === saved.subject) ? saved.subject : null;
     return true;
   }
   get transcript() {
@@ -522,11 +521,11 @@ export class DialogueJourney {
   get current() { return dialogues.find(entry => entry.id === this.trail.at(-1)) || {id:'opening', text:opening}; }
   get menuSubject() { return subjects.find(item => item.id === this.subject); }
   get menuChoices() {
-    if (this.subject) return subjectQuestions(this.subject, this.visited);
-    return subjects.map(item => ({...item, kind:'subject', disabled:subjectQuestions(item.id, this.visited).length === 0}));
+    if (this.subject) return subjectQuestions(this.subject);
+    return subjects.map(item => ({...item, kind:'subject'}));
   }
   selectSubject(id) {
-    if (!subjectQuestions(id, this.visited).length) return false;
+    if (!subjects.some(item => item.id === id)) return false;
     this.subject = id; return true;
   }
   choose(id) {

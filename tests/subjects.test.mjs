@@ -17,16 +17,27 @@ test('every question is available on first entry and returns to all five section
       assert.ok(restored.restore(j.snapshot()));
       assert.deepEqual(restored.transcript,j.transcript);
       restored.selectSubject(section.id);
-      assert.equal(restored.menuChoices.some(row=>row.id===id),section.id==='garden');
+      assert.deepEqual(restored.menuChoices.map(row=>row.id),section.questions);
+      assert.ok(restored.choose(id));
     }
   }
 });
 
-test('the last unanswered question leaves its section visible and disabled',()=>{
+test('all five fully explored sections reopen from an existing saved visit',()=>{
   const j=new DialogueJourney();
-  const section=subjects.find(s=>s.id==='god');
-  for(const id of [...section.questions].reverse()){assert.ok(j.selectSubject(section.id));assert.ok(j.choose(id));}
-  assert.equal(j.menuChoices.find(s=>s.id==='god').disabled,true);
-  assert.equal(j.selectSubject('god'),false);
-  assert.equal(j.history.length,10);
+  for (const section of subjects) {
+    for (const id of [...section.questions].reverse()) {
+      assert.ok(j.selectSubject(section.id));
+      assert.ok(j.choose(id));
+    }
+  }
+  for (const section of subjects) {
+    const restored=new DialogueJourney();
+    assert.ok(restored.restore({...j.snapshot(),subject:section.id}));
+    assert.equal(restored.subject,section.id);
+    assert.deepEqual(restored.menuChoices.map(row=>row.id),section.questions);
+    assert.ok(restored.choose(section.questions[0]));
+    assert.ok(restored.selectSubject(section.id));
+    assert.deepEqual(restored.menuChoices.map(row=>row.id),section.questions);
+  }
 });

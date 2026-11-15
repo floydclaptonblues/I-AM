@@ -691,10 +691,6 @@ dialog header,dialog article {
   border-radius: 2px;
 }
 
-.choices-frame button[data-visited=true] {
-  color: #bfb4a3;
-}
-
 .choices-frame button[data-visited=true] span:last-child {
   font-style: italic;
 }

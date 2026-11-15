@@ -1,5 +1,5 @@
-import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=three-cuts-1';
-import { loadSession, saveSession } from './session.js?v=three-cuts-1';
+import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=full-lists-1';
+import { loadSession, saveSession } from './session.js?v=full-lists-1';
 import { FirstVisitGreeting } from './speech.js?v=immersion-1';
 import { RecordedNarrator } from './recorded-voice.js?v=three-cuts-1';
 import { AnswerView } from './answer.js?v=immersion-1';
@@ -90,9 +90,15 @@ function renderChoices({ focus = false, focusId = null } = {}) {
     const li = document.createElement('li'), button = document.createElement('button');
     const number = document.createElement('span'); number.className='choice-number'; number.textContent = String(index+1)+'.'; number.setAttribute('aria-hidden','true');
     const label = document.createElement('span'); label.textContent = questionLabel(entry);
-    button.type='button'; button.disabled = Boolean(entry.disabled);
+    button.type='button';
     if (entry.kind === 'subject') button.dataset.subject=entry.id;
-    else { button.dataset.question=entry.id; button.dataset.visited=String(journey.visited.has(entry.id)); }
+    else {
+      button.dataset.question=entry.id;
+      if (journey.visited.has(entry.id)) {
+        button.dataset.visited='true';
+        button.setAttribute('aria-description','Previously asked');
+      }
+    }
     button.setAttribute('aria-controls',entry.kind === 'subject' ? 'question-list' : 'caption');
     button.append(number,label); button.addEventListener('click',()=>choose(entry)); li.append(button); fragment.append(li);
   });
@@ -112,7 +118,8 @@ function renderChoices({ focus = false, focusId = null } = {}) {
     const target = (focusId && $('question-list').querySelector('[data-question="'+focusId+'"], [data-subject="'+focusId+'"]:enabled'))
       || $('question-list').querySelector('button:enabled') || $('back-questions');
     target.focus({ preventScroll: true });
-    target.scrollIntoView({ block: 'center', behavior: 'instant' });
+    if (selectedSubject) $('questions').scrollIntoView({ block: 'start', behavior: 'instant' });
+    else target.scrollIntoView({ block: 'center', behavior: 'instant' });
   }
 }
 function returnToQuestions() {
@@ -198,7 +205,7 @@ document.addEventListener('keydown',event=>{
   if (!prefix && n === 1 && items.length >= 10) {
     event.preventDefault();
     numberTimer = setTimeout(()=>{ cancelNumberShortcut(); choose(items[0]); }, 650);
-  } else if (items[n-1] && !items[n-1].disabled) {
+  } else if (items[n-1]) {
     event.preventDefault(); choose(items[n-1]);
   }
 });

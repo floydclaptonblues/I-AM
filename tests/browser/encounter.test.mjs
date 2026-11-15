@@ -240,13 +240,43 @@ test('a visitor can ask any question first in each section, then sees the five s
     assert.equal(await page.getByText('Main questions',{exact:true}).count(),0);
   }
   await page.reload(); await page.locator('[data-subject="serpent"]').click();
-  assert.equal(await page.locator('[data-question="enjoy"]').count(),0);
+  assert.equal(await page.locator('[data-question="enjoy"]').getAttribute('data-visited'),'true');
   assert.equal(await page.locator('[data-question="memory"]').count(),0);
   await page.getByRole('button',{name:'Return to subjects'}).click();
   assert.equal(await page.evaluate(()=>document.activeElement.dataset.subject),'serpent');
   await page.locator('[data-subject="universe"]').click();
   await audit(page,'open-universe-list');await page.screenshot({path:results+'/universe-menu-mobile.png',fullPage:true});
 });
+for (const width of [320, 1366]) {
+  test('fully explored sections show every question on a return visit at width '+width, async t=>{
+    const page=await open(t,{width,height:width===320?568:768,mobile:width===320,route:subjects.flatMap(s=>s.questions)});
+    for (const section of subjects) {
+      await page.getByRole('button',{name:section.label,exact:true}).click();
+      if (section.id==='garden') {
+        assert.match(await page.locator('#answer-accessible').textContent(),/a thousand Edens/);
+        continue;
+      }
+      const rows=page.locator('#question-list [data-question]');
+      assert.deepEqual(await rows.evaluateAll(nodes=>nodes.map(n=>n.dataset.question)),section.questions);
+      assert.equal(await rows.count(),await page.locator('#question-list [data-visited="true"]:enabled').count());
+      const heading=await page.locator('#subject-title').boundingBox();
+      assert.ok(heading.y>=0 && heading.y+heading.height<=page.viewportSize().height);
+      const last=rows.last();
+      await last.scrollIntoViewIfNeeded();
+      const box=await last.boundingBox();
+      assert.ok(box.x>=0 && box.x+box.width<=width && box.y>=0 && box.y+box.height<=page.viewportSize().height+1);
+      // Asking a familiar question should allow the same section to open again.
+      await rows.first().click();
+      assert.equal(await page.locator('[data-subject]:enabled').count(),5);
+      await page.locator('[data-subject="'+section.id+'"]').click();
+      await page.reload();
+      await rows.first().waitFor();
+      assert.deepEqual(await rows.evaluateAll(nodes=>nodes.map(n=>n.dataset.question)),section.questions);
+      await page.getByRole('button',{name:'Return to subjects'}).click();
+    }
+  });
+}
+
 test('two-digit shortcuts can ask the darkness question on a first visit',async t=>{
   const page=await open(t,{width:320,height:568});
   await page.keyboard.press('1'); await page.keyboard.press('1'); await page.keyboard.press('6');
