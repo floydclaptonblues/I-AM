@@ -1,7 +1,7 @@
-import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=god-threads-1';
-import { loadSession, saveSession } from './session.js?v=god-threads-1';
+import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=humanity-threads-1';
+import { loadSession, saveSession } from './session.js?v=humanity-threads-1';
 import { FirstVisitGreeting } from './speech.js?v=immersion-1';
-import { RecordedNarrator } from './recorded-voice.js?v=god-threads-1';
+import { RecordedNarrator } from './recorded-voice.js?v=humanity-threads-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
 import { Portrait } from './portrait.js?v=mouth-1';
@@ -103,7 +103,7 @@ function renderChoices({ focus = false, focusId = null } = {}) {
   const note = $('section-menu-note');
   note.hidden = !journey.atSectionMain;
   if (!note.hidden) {
-    const finished = menuSubject.id === 'god' ? 'You’ve asked all the God questions available here.' : 'You’ve asked everything in The Universe.';
+    const finished = menuSubject.id === 'universe' ? 'You’ve asked everything in The Universe.' : 'You’ve asked all the ' + menuSubject.title + ' questions available here.';
     note.textContent = journey.menuChoices.length ? 'Main questions' : finished;
   }
   $('questions').setAttribute('aria-label', menuSubject ? 'Questions about ' + menuSubject.title : 'Subjects to ask the serpent about');

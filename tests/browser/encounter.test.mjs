@@ -412,3 +412,33 @@ test('God returns to its unanswered main questions after the serpent describes p
   await ask('God');
   assert.equal(await buttons.count(),0);
 });
+
+test('Humanity returns to its remaining questions with the last reply and recorded voice intact', async t=>{
+  const page=await open(t,{width:390,height:844,mobile:true,muted:false,mock:false});
+  const ask=name=>page.getByRole('button',{name,exact:true}).click();
+  await ask('Humanity');
+  await ask('Why did we stand upright?');
+  await ask('What did we do with our hands once they were free?');
+  await ask('How did we first come to understand death?');
+  await ask('Why did we bury our dead?');
+  await ask('What made you think a burial could be an act of love?');
+  await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/burial-love-')&&a.currentTime>.15;});
+  assert.match(await page.locator('#answer-accessible').textContent(),/bring news to the dead/);
+  const list=()=>page.locator('#question-list [data-question]').evaluateAll(nodes=>nodes.map(n=>n.dataset.question));
+  const remaining=['called-back','human','purpose','remember'];
+  assert.deepEqual(await list(),remaining);
+  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
+  await page.reload();
+  assert.deepEqual(await list(),remaining);
+  await ask('Go back to the previous questions');
+  assert.deepEqual(await list(),['remember']);
+  await ask('Ask about something else'); await ask('Humanity');
+  await ask('What were our hands meant for?'); await ask('Why do we have to work?');
+  await ask('Would you have had us break those promises?');
+  await page.waitForFunction(()=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/kept-promise-')&&a.currentTime>.15;});
+  assert.deepEqual(await list(),['free']);
+  await ask('Are we free?');
+  assert.equal(await page.locator('#section-menu-note').innerText(),'Main questions');
+  assert.ok((await list()).includes('hurry'));
+  assert.equal(await page.locator('[data-question="kept-promise"]').count(),0);
+});

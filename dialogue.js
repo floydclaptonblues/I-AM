@@ -67,7 +67,7 @@ export const dialogues = [
   },
   {
     "id": "death",
-    "requiresAny": [["garden-story"]],
+    "requiresAny": [["garden-story"], ["hands"]],
     "label": "Did you teach us death?",
     "requires": [
       "test"
@@ -92,6 +92,7 @@ export const dialogues = [
   },
   {
     "id": "hurry",
+    "requiresAny": [["work"]],
     "label": "What is a hurry?",
     "requires": [
       "age"
@@ -422,6 +423,16 @@ const sayMyName = {
   text: 'Let him say my name first. I know how it sounds in your mouth. I used to know how it sounded in his.'
 };
 dialogues.push(quietLight, sayMyName);
+const keptPromise = {
+  id: 'kept-promise', label: 'Would you have had us break those promises?', requires: ['work'],
+  text: 'No. One winter I watched a man give his daughter the last dried fig and go out again in the snow. She ate half. She put the rest back where he would find it. Which of those two would you have me set free?'
+};
+const burialLove = {
+  id: 'burial-love', label: 'What made you think a burial could be an act of love?', requires: ['burial'],
+  text: 'The tree had stopped bearing. There was nothing there to pick. A woman came back all the same. She sat in the grass and told the earth her son had cut his first tooth. I had never seen anyone bring news to the dead.'
+};
+dialogues.push(keptPromise, burialLove);
+
 
 
 // An unanswered fork stays available at the section menu after another fork ends.
@@ -451,9 +462,24 @@ const godThreads = {
   'want-god': ['say-my-name', 'questioned-father']
 };
 
+const humanityThreads = {
+  upright: ['hands', 'human'],
+  hands: ['purpose', 'death'],
+  purpose: ['work'],
+  work: ['kept-promise', 'free', 'hurry'],
+  'kept-promise': ['free'],
+  death: ['burial'],
+  burial: ['burial-love', 'remember'],
+  'called-back': ['happy'],
+  happy: ['want-more'],
+  'want-more': ['become']
+};
+
+const humanityGardenQuestions = ['death','burial','burial-love','remember'];
 const questionSections = {
   universe: { openers: universeOpeners, threads: universeThreads, discoveries: ['shadows','nothing-darkness','certain-light'] },
-  god: { openers: ['evil','father-brighter'], threads: godThreads, discoveries: ['questioned-father'] }
+  god: { openers: ['evil','father-brighter'], threads: godThreads, discoveries: ['questioned-father'] },
+  humanity: { openers: ['upright','called-back'], threads: humanityThreads, discoveries: ['death','hurry'] }
 };
 
 export function isUnlocked(entry, visited) {
@@ -467,7 +493,7 @@ export const subjects = [
   { id:'universe', label:'The Universe', title:'The Universe', questions:['before-humans','why-wait','before-light','first-memory','other-lights','heard-the-others','voices-of-lights','names-of-lights','fill-darkness','darkness-fear','darkness-end','shadows','nothing-darkness','darkness-ended','certain-light','you-darkness'] },
   { id:'garden', label:'The Garden', title:'The Garden', questions:['garden-story','garden','test','others','paradise','return','came-garden'] },
   { id:'god', label:'God', title:'God', questions:['evil','darkness','abandoned','father-brighter','god-knows','believe-father','want-god','questioned-father','quiet-light','say-my-name'] },
-  { id:'humanity', label:'Humanity', title:'Humanity', questions:['upright','hands','human','purpose','work','death','burial','remember','hurry','free','called-back','happy','want-more','become'] },
+  { id:'humanity', label:'Humanity', title:'Humanity', questions:['upright','hands','human','purpose','work','death','burial','remember','hurry','free','called-back','happy','want-more','become','kept-promise','burial-love'] },
   { id:'serpent', label:'I Am', title:'I Am', questions:['identity','age','light','memory','hate','lied','believe','enjoy','enjoyed-suffering','alone-with-lights'] }
 ];
 export function subjectQuestions(id, visited) {
@@ -480,7 +506,7 @@ export function subjectQuestions(id, visited) {
 
 const order = ['garden', 'test', 'upright', 'others', 'evil', 'identity', 'hands', 'light', 'memory', "human", "purpose", "work", "death", "burial", "remember", "hurry", "free", "hate", "darkness", "abandoned", "lied", "believe", "paradise", "return", "enjoy", "age"].concat(["before-humans","why-wait","before-light","other-lights","heard-the-others","names-of-lights","fill-darkness","father-brighter","darkness-fear","darkness-end","shadows","called-back","happy","want-more","came-garden","become","god-knows","believe-father","want-god","nothing-darkness","darkness-ended","certain-light","you-darkness"]);
 export function availableDialogues(visited) {
-  return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions, gardenStory, firstMemory, voicesOfLights, quietLight, sayMyName]
+  return [...order.map(id => dialogues.find(entry => entry.id === id)), ...contradictions, gardenStory, firstMemory, voicesOfLights, quietLight, sayMyName, keptPromise, burialLove]
     .filter(entry => isUnlocked(entry, visited));
 }
 
@@ -497,10 +523,10 @@ const followUps = {
   hands: ['purpose'],
   human: ['hands'],
   purpose: ['work'],
-  work: ['free'],
+  work: ['free', 'kept-promise'],
   free: ['hurry', 'upright'],
   death: ['burial', 'others'],
-  burial: ['remember'],
+  burial: ['remember', 'burial-love'],
   remember: ['identity', 'age'],
   age: ['before-humans', 'hurry', 'hate'],
   hurry: ['upright', 'work'],
@@ -550,6 +576,12 @@ const waitingCompany = {
   askedAs: 'waiting-company'
 };
 const questionPhrasings = [waitingCompany,
+  { ...dialogues.find(entry => entry.id === 'called-back'), displayLabel: 'When did you first notice we were different?', askedAs: 'humans-first-question' },
+  { ...dialogues.find(entry => entry.id === 'hands'), displayLabel: 'What did we do with our hands once they were free?', askedAs: 'freed-hands' },
+  { ...dialogues.find(entry => entry.id === 'death'), displayLabel: 'How did we first come to understand death?', askedAs: 'learned-death' },
+  { ...dialogues.find(entry => entry.id === 'happy'), displayLabel: 'Were you glad when we first spoke back?', askedAs: 'glad-we-spoke' },
+  { ...dialogues.find(entry => entry.id === 'become'), displayLabel: 'Did you know where that hunger would take us?', askedAs: 'human-hunger' },
+  { ...dialogues.find(entry => entry.id === 'hurry'), displayLabel: 'Why are we always in such a hurry?', askedAs: 'human-hurry' },
   { ...dialogues.find(entry => entry.id === 'evil'), displayLabel: 'What do you hold against God?', askedAs: 'blame-god' },
   { ...dialogues.find(entry => entry.id === 'darkness'), displayLabel: 'What was it like where God sent you?', askedAs: 'sent-into-darkness' },
   { ...dialogues.find(entry => entry.id === 'father-brighter'), displayLabel: 'Was God’s light brighter than yours?', askedAs: 'gods-light' },
@@ -567,6 +599,9 @@ function sectionMainQuestions(section, current, visited) {
   if (section === questionSections.universe && current === gardenStory.id) {
     for (const id of ['shadows','certain-light','you-darkness']) ids.add(id);
   }
+  if (section === questionSections.humanity && current === gardenStory.id) {
+    for (const id of humanityGardenQuestions) ids.add(id);
+  }
   for (const id of section.openers) ids.add(id);
   for (const asked of visited) {
     for (const next of section.threads[asked] || []) ids.add(next);
@@ -574,15 +609,17 @@ function sectionMainQuestions(section, current, visited) {
   // Revelations in the Garden, God, or Humanity can also open these questions.
   for (const id of section.discoveries) ids.add(id);
   const prompts = unansweredQuestions([...ids], visited);
-  return prompts.map(entry => entry.id === 'believe-father' ? beliefMainPrompt : entry);
+  return prompts.map(entry => mainPhrasings.find(prompt => prompt.id === entry.id) || entry);
 }
 
-const beliefMainPrompt = { ...dialogues.find(entry => entry.id === 'believe-father'),
-  displayLabel: 'Do you believe God can see into the darkness?', askedAs: 'believe-god-in-darkness' };
+const mainPhrasings = [
+  { ...dialogues.find(entry => entry.id === 'believe-father'), displayLabel: 'Do you believe God can see into the darkness?', askedAs: 'believe-god-in-darkness' },
+  { ...keptPromise, displayLabel: 'Was it wrong to promise each other food and shelter?', askedAs: 'promise-food' },
+  dialogues.find(entry => entry.id === 'become')
+];
 
 function historyEntry(id) {
-  if (id === beliefMainPrompt.askedAs) return beliefMainPrompt;
-  return questionPhrasings.find(entry => entry.askedAs === id) || dialogues.find(entry => entry.id === id);
+  return mainPhrasings.find(entry => entry.askedAs === id) || questionPhrasings.find(entry => entry.askedAs === id) || dialogues.find(entry => entry.id === id);
 }
 
 export function relatedDialogues(currentId, visited) {
@@ -649,9 +686,7 @@ export class DialogueJourney {
     if (this.subject === 'garden') return [gardenStory];
     if (this.subject) {
       const entries = subjectQuestions(this.subject, this.visited).filter(entry => entry.id !== this.current.id);
-      const lead = this.current.id === gardenStory.id
-        ? {humanity:'death'}[this.subject]
-        : relatedDialogues(this.current.id, this.visited).find(entry => entries.some(item => item.id === entry.id) && !this.visited.has(entry.id))?.id;
+      const lead = relatedDialogues(this.current.id, this.visited).find(entry => entries.some(item => item.id === entry.id) && !this.visited.has(entry.id))?.id;
       if (lead) return [...entries.filter(entry => entry.id === lead), ...entries.filter(entry => entry.id !== lead)];
       return entries;
     }
@@ -672,7 +707,7 @@ export class DialogueJourney {
     if (this.current.id === gardenStory.id) return [
       {id:'universe', label:'Follow the shadow into The Universe', kind:'subject'},
       {id:'humanity', label:'Follow the child into Humanity', kind:'subject'}
-    ].filter(link => link.id !== 'universe' || !this.visited.has('you-darkness'));
+    ].filter(link => link.id === 'universe' ? !this.visited.has('you-darkness') : humanityGardenQuestions.some(id => !this.visited.has(id)));
     if (this.menuChoices.some(entry => !this.visited.has(entry.id))) return [];
     const related = this.choices.find(entry => !this.visited.has(entry.id) && !this.menuSubject.questions.includes(entry.id));
     const destination = related && subjects.find(subject => subject.questions.includes(related.id));

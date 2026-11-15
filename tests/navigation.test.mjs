@@ -15,7 +15,7 @@ test('choice groups stay bounded even after the whole conversation is unlocked',
   }
 });
 
-test('all 57 answers remain reachable through the actual related-choice graph', () => {
+test('all 59 answers remain reachable through the actual related-choice graph', () => {
   const visited = new Set();
   const contexts = new Set(['opening']);
   for (let pass = 0; pass <= dialogues.length; pass++) {
@@ -34,7 +34,7 @@ test('all 57 answers remain reachable through the actual related-choice graph', 
 test('back restores the previous answer and its choices without forgetting progress', () => {
   const journey = new DialogueJourney();
   for (const id of ['upright', 'hands', 'purpose', 'work']) assert.ok(journey.choose(id));
-  assert.deepEqual(journey.choices.map(d => d.id), ['free']);
+  assert.deepEqual(journey.choices.map(d => d.id), ['free','kept-promise']);
   journey.back();
   assert.equal(journey.current.id, 'purpose');
   assert.deepEqual(journey.choices.map(d => d.id), ['work']);

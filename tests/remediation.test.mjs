@@ -16,7 +16,7 @@ for (const challenge of contradictions) {
 }
 
 test('the supplied three reactions are exact and no prior answers are replaced', () => {
-  assert.equal(dialogues.length,57);
+  assert.equal(dialogues.length,59);
   assert.deepEqual(contradictions.map(d=>d.text), [
     'I said creation called back. You mistake the light for the things it illuminated. Or perhaps I have mistaken them.',
     'I wondered when you would notice.',
