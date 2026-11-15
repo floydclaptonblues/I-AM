@@ -138,7 +138,8 @@ test('a challenge is available immediately and is stored in Review',async t=>{
   const page=await open(t);await choose(page,'alone-with-lights');
   const answer=await page.locator('#answer-accessible').textContent();
   await page.reload();assert.equal(await page.locator('#answer-accessible').textContent(),answer);
-  await page.locator('[data-subject="serpent"]').click();assert.equal(await page.locator('[data-question="alone-with-lights"]').count(),0);
+  await page.locator('[data-subject="serpent"]').click();
+  assert.equal(await page.locator('[data-question="alone-with-lights"]').isEnabled(),true);
   await page.locator('.utilities summary').click();await page.locator('#review').click();assert.ok((await page.locator('#history').innerText()).includes(answer));
 });
 
