@@ -441,7 +441,7 @@ dialogues.push(firstName, permission);
 dialogues.push({
   id: 'upright-curse',
   label: "What's the evil thing you did to us once we stood upright?",
-  text: 'I cursed you with itchy buttholes after you use the bathroom. I made your toilet paper crisis in the pandemic existential. Standing upright pushed your buttcheeks together, forcing you to have to wipe your ass with the hands you freed from the ground. Ha ha ha hahaha... I am truly EVIL... lowly primates.'
+  text: 'I cursed you with itchy buttholes after you use the bathroom. I made your toilet paper crisis in the pandemic existential. Standing upright pushed your buttcheeks together, forcing you to have to wipe your ass with the hands you freed from the ground. I am truly EVIL... lowly primates. [Evil chuckle]'
 });
 
 

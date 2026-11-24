@@ -92,3 +92,5 @@ Sentence highlighting follows measured sentence boundaries. Mouth poses follow a
 To regenerate after a dialogue change, use PowerShell 7 on Windows with the approved David voice installed: `node scripts/export-voice-script.mjs`, `./scripts/render-david.ps1`, `python scripts/package-david.py`, then `node scripts/prepare-audio.mjs`. Review changed recordings before committing their sources and manifest. Existing recordings require no speech service or credentials.
 
 To rebuild mouth timing without changing any voice recording, run `python scripts/mouth-envelope.py`. The committed timing file is compact and decoding it requires no microphone permission, AudioContext, or ongoing sound analysis on mobile. Browser tests cover mobile audio-time jumps, sustained vowels, silence, buffering, and stopping.
+
+The chuckle at the end of `upright-curse` uses AntumDeluge’s “Evil Laugh” ([source](https://opengameart.org/content/evil-laugh), CC0). It is lowered by about two semitones, volume-matched, and included in the lossless answer recording with waveform mouth cues. The “[Evil chuckle]” caption marks the sound effect and is not spoken.
