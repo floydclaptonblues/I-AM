@@ -212,7 +212,7 @@ test('Stop, Back and restart clean up an interrupted finale without stale reveal
 test('quiet spoken finale keeps mouth closed; failure and reduced motion release all temporary state',async t=>{
   const page=await open(t,{route:finaleRoute,muted:false,reduced:true});
   await choose(page,'you-darkness');
-  await page.waitForFunction(()=>testTracks.length>0);
+  await page.waitForFunction(()=>testTracks.at(-1)?.src.includes('/you-darkness-'));
   const voice=await page.evaluate(()=>{const audio=testTracks.at(-1);audio.dispatchEvent(new Event('playing'));return {rate:audio.playbackRate,volume:audio.volume};});
   assert.deepEqual(voice,{rate:0.85,volume:0.55});
   assert.equal(await page.locator('#portrait').getAttribute('data-mouth'),'closed');
@@ -364,7 +364,7 @@ test('mobile jaw follows jumps in audio time, holds vowels, and closes for silen
 
 test('the existing voiced exchanges can each be the first question in a section',async t=>{
   const page=await open(t,{width:390,height:844,mobile:true,mock:false,muted:false});
-  for (const id of ['voices-of-lights','quiet-light','say-my-name','burial-love','kept-promise','first-name','permission']){
+  for (const id of ['voices-of-lights','quiet-light','say-my-name','burial-love','kept-promise','first-name','permission','upright-curse']){
     await choose(page,id);
     await page.waitForFunction(id=>{const a=document.getElementById('voice-track');return a.currentSrc.includes('/'+id+'-')&&a.currentTime>.12;},id);
     assert.equal(await page.locator('#question-list [data-subject]').count(),5);
