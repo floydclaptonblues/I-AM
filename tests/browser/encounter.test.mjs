@@ -69,6 +69,7 @@ async function open(t, {width=390,height=844,route=[],muted=true,reduced=false,m
   t.after(()=>assert.deepEqual(errors,[],'No uncaught browser errors'));
   await page.goto(base,{waitUntil:'networkidle'});
   await page.locator('#question-list button').first().waitFor();
+  if (muted) await page.getByRole('button',{name:'Mute voice',exact:true}).click();
   return page;
 }
 async function audit(page,name) {
@@ -96,6 +97,28 @@ for(const [width,height] of [[320,568],[375,667],[390,844],[768,1024],[1366,768]
     await page.screenshot({path:results+'/opening-'+width+'x'+height+'.png',fullPage:true});
   });
 }
+
+test('a saved mute resets on reload and a blocked opening starts on the first section tap',async t=>{
+  const page=await open(t,{muted:true});
+  await page.addInitScript(()=>{
+    const play=HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play=function(){
+      if(this.id==='voice-track' && !navigator.userActivation.hasBeenActive)
+        return Promise.reject(Object.assign(new Error('Tap required'),{name:'NotAllowedError'}));
+      return play.call(this);
+    };
+  });
+  await page.reload();
+  await page.locator('#hear-opening').waitFor({state:'visible'});
+  assert.equal(await page.getByRole('button',{name:'Mute voice',exact:true}).count(),1);
+  await page.getByRole('button',{name:'Humanity',exact:true}).click();
+  await page.waitForFunction(()=>testTracks.length>0);
+  assert.equal(await page.locator('#hear-opening').isHidden(),true);
+  await page.getByRole('button',{name:"What's the evil thing you did to us once we stood upright?",exact:true}).click();
+  await page.waitForFunction(()=>testTracks.at(-1)?.src.includes('upright-curse-'));
+  assert.match(await page.locator('#answer-accessible').textContent(),/lowly primates/);
+  assert.equal(await page.locator('[data-subject]:enabled').count(),5);
+});
 
 test('keyboard focus receives one complete answer; speech never replaces or rearranges it',async t=>{
   const page=await open(t,{muted:false});

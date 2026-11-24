@@ -8,7 +8,7 @@ export function sentencePause(sentence, nextSentence, index, pacing = defaultPac
     ? pacing.rhetorical : pacing.ordinary;
 }
 
-// One opening attempt per fresh visit; a saved visit never queues a greeting.
+// Attempt the displayed response once per page load, including returning visits.
 export class FirstVisitGreeting {
   constructor({ saved, muted, play, remember, onBlocked }) {
     Object.assign(this, { saved, muted, play, remember, onBlocked });
@@ -16,7 +16,7 @@ export class FirstVisitGreeting {
     this.pending = false;
   }
   start() {
-    if (this.saved || this.muted || this.started) return false;
+    if (this.muted || this.started) return false;
     this.started = true; this.pending = true;
     this.remember(); this.play();
     return true;

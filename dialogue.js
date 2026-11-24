@@ -438,6 +438,11 @@ const permission = {
   text: 'You would ask me whether the fruit was ripe with the stem already broken in your hand. If I said yes, you ate. If I kept silent, you ate. Only one of those meals could be blamed on me.'
 };
 dialogues.push(firstName, permission);
+dialogues.push({
+  id: 'upright-curse',
+  label: "What's the evil thing you did to us once we stood upright?",
+  text: 'I cursed you with itchy buttholes after you use the bathroom. I made your toilet paper crisis in the pandemic existential. Standing upright pushed your buttcheeks together, forcing you to have to wipe your ass with the hands you freed from the ground. Ha ha ha hahaha... I am truly EVIL... lowly primates.'
+});
 
 
 
@@ -445,7 +450,7 @@ export const subjects = [
   { id:'universe', label:'The Universe', title:'The Universe', questions:["before-humans","other-lights","heard-the-others","voices-of-lights","names-of-lights","why-wait","before-light","first-memory","fill-darkness","darkness-fear","darkness-end","nothing-darkness","darkness-ended","shadows","certain-light","you-darkness"] },
   { id:'garden', label:'The Garden', title:'The Garden', questions:['garden-story'] },
   { id:'god', label:'God', title:'God', questions:["evil","darkness","abandoned","quiet-light","father-brighter","god-knows","believe-father","questioned-father","want-god","say-my-name"] },
-  { id:'humanity', label:'Humanity', title:'Humanity', questions:["upright","hands","human","purpose","work","kept-promise","hurry","free","death","burial","burial-love","remember","called-back","happy","want-more","become"] },
+  { id:'humanity', label:'Humanity', title:'Humanity', questions:["upright","hands","upright-curse","human","purpose","work","kept-promise","hurry","free","death","burial","burial-love","remember","called-back","happy","want-more","become"] },
   { id:'serpent', label:'I Am', title:'I Am', questions:["identity","first-name","age","hate","light","alone-with-lights","lied","permission","believe","enjoy","enjoyed-suffering"] }
 ];
 const waitingCompany = {

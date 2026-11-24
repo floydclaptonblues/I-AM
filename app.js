@@ -1,7 +1,7 @@
-import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=full-lists-1';
-import { loadSession, saveSession } from './session.js?v=full-lists-1';
-import { FirstVisitGreeting } from './speech.js?v=immersion-1';
-import { RecordedNarrator } from './recorded-voice.js?v=three-cuts-1';
+import { opening, DialogueJourney, questionLabel, subjects } from './dialogue.js?v=sound-humor-1';
+import { loadSession, saveSession } from './session.js?v=sound-humor-1';
+import { FirstVisitGreeting } from './speech.js?v=sound-humor-1';
+import { RecordedNarrator } from './recorded-voice.js?v=sound-humor-1';
 import { AnswerView } from './answer.js?v=immersion-1';
 import { GardenPlayer } from './background.js?v=immersion-1';
 import { Portrait } from './portrait.js?v=mouth-1';
@@ -10,7 +10,7 @@ const $ = id => document.getElementById(id);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const saved = loadSession();
 const journey = saved?.journey || new DialogueJourney();
-let muted = saved?.muted ?? false, still = saved?.still ?? reduced.matches;
+let muted = false, still = saved?.still ?? reduced.matches;
 let current = journey.current;
 const garden = new GardenPlayer({ image: $('garden-image'), canvas: $('garden-canvas'), video: $('garden-video') });
 const answer = new AnswerView({ visual: $('answer-visual'), accessible: $('answer-accessible') });
@@ -39,11 +39,11 @@ const narrator = new RecordedNarrator({
 });
 narrator.loadCatalog();
 greeting = new FirstVisitGreeting({
-  saved: Boolean(saved), muted,
-  play: () => narrator.play(opening), remember,
+  muted,
+  play: () => narrator.play(current.text), remember,
   onBlocked: () => {
     $('hear-opening').hidden = false;
-    $('status').textContent = 'Select Hear the serpent to hear the opening line.';
+    $('status').textContent = 'Tap Hear the serpent to enable audio.';
   }
 });
 function cancelGreeting() { greeting.cancel(); $('hear-opening').hidden = true; }
@@ -64,12 +64,15 @@ function play({ focus = false } = {}) {
 }
 function choose(entry) {
   if (entry.kind === 'subject') {
+    const awaitingSound = !$('hear-opening').hidden;
     cancelGreeting(); stopResponse(); showText(current.text);
     if (!journey.selectSubject(entry.id)) return;
     if (entry.id === 'garden') { choose(journey.menuChoices[0]); return; }
     renderChoices({ focus:true });
     $('status').textContent = '';
-    remember(); return;
+    remember();
+    if (awaitingSound && !muted) play();
+    return;
   }
   if (!journey.choose(entry.id)) return;
   stopResponse();
@@ -131,6 +134,9 @@ function returnToQuestions() {
 $('back-questions').addEventListener('click', returnToQuestions);
 $('listen').addEventListener('click', () => play());
 $('hear-opening').addEventListener('click', () => play());
+document.addEventListener('click', event => {
+  if (!$('hear-opening').hidden && !muted && !event.target.closest('button, a, summary, dialog')) play();
+});
 $('stop').addEventListener('click', () => { cancelGreeting(); stopResponse(); showText(current.text); });
 $('mute').addEventListener('click', () => {
   cancelGreeting();

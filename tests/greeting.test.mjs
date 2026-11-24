@@ -34,11 +34,19 @@ test('a fresh visit saves first and speaks both invitation sentences exactly onc
   assert.equal(s.greeting.start(), false); assert.equal(s.utterances.length, 2);
 });
 
-test('saved visits and muted visits never queue an automatic opening', () => {
-  for (const options of [{ saved: true }, { muted: true }, { saved: true, muted: true }]) {
+test('muted visits never queue an automatic opening', () => {
+  for (const options of [{ muted: true }, { saved: true, muted: true }]) {
     const s = setup(options); assert.equal(s.greeting.start(), false);
     assert.deepEqual(s.events, []); assert.equal(s.utterances.length, 0);
   }
+});
+
+test('returning visits attempt playback once and cancellation prevents another attempt', () => {
+  const s=setup({saved:true});
+  assert.equal(s.greeting.start(),true);
+  assert.deepEqual(s.events,['save','speak']);
+  s.greeting.cancel();
+  assert.equal(s.greeting.start(),false);
 });
 
 test('a blocked automatic opening offers one fallback without repeatedly retrying', () => {

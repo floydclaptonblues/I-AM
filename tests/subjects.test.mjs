@@ -5,7 +5,7 @@ import { DialogueJourney, subjects } from '../dialogue.js';
 test('every question is available on first entry and returns to all five sections', () => {
   const all = subjects.flatMap(s=>s.questions);
   assert.equal(new Set(all).size, all.length);
-  assert.deepEqual(subjects.map(s=>s.questions.length),[16,1,10,16,11]);
+  assert.deepEqual(subjects.map(s=>s.questions.length),[16,1,10,17,11]);
   for (const section of subjects) {
     for (const id of section.questions) {
       const j = new DialogueJourney();

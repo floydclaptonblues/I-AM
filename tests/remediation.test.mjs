@@ -6,7 +6,7 @@ import { sentenceRanges } from '../answer.js';
 import { loadSession, saveSession } from '../session.js';
 
 test('the supplied three reactions are exact and no prior answers are replaced', () => {
-  assert.equal(dialogues.length,60);
+  assert.equal(dialogues.length,61);
   assert.deepEqual(contradictions.map(d=>d.text), [
     'I said creation called back. You mistake the light for the things it illuminated. Or perhaps I have mistaken them.',
     'I wondered when you would notice.',
